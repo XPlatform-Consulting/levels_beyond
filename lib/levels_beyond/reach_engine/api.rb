@@ -543,7 +543,6 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Workflow+Execution+Status
       def workflow_execution_status(id)
-
         http_get("workflow/execution/#{id}")
       end
 
@@ -565,6 +564,9 @@ module LevelsBeyond
         http_post("workflow/#{id}/resume")
       end
 
+      # The Get Watchfolder method returns a list of watchfolders. The details provided in the response include the
+      # watchfolder name, location, whether the watchfolder is enabled or disabled, and poll interval seconds.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Watchfolders
       def watch_folder_find
         http_get('workflow/watchfolder')
@@ -595,11 +597,6 @@ module LevelsBeyond
       def watch_folder_create(args = { })
         parameters = api_method_parameters(__method__)
         data = process_parameters(parameters, args)
-
-        # # FORCE SUBJECT TO BE AN ARRAY
-        # subject = data[:subject]
-        # data[:subject] = [*subject] if subject
-
         return http_post_json('workflow/watchfolder', data)
       end
       API_METHOD_PARAMETERS[:watch_folder_create] = [
@@ -614,18 +611,96 @@ module LevelsBeyond
         :context_data
       ]
 
+      # When a watchfolder is created, it is disabled. The Enable Watchfolder method enables a watchfolder that is
+      # disabled. Enabling or disabling a watchfolder determines whether or not adding a file to the watchfolder
+      # triggers a workflow. Therefore, if a watchfolder is enabled, and a file is then added to a watchfolder, a
+      # workflow is automatically triggered.
+      #
+      # @param [String] watch_folder_id The id of the watch folder
+      # @return [Hash]
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_enable(watch_folder_id)
-
         http_post("workflow/watchfolder/#{watch_folder_id}/enable")
       end
 
+      # The Disable Watchfolder method disables an enabled watchfolder. When a watchfolder is disabled, it  essentially
+      # turns the folder “off” so that it's no longer valid for a workflow. For example, a watchfolder can be disabled
+      # for content reorganization or when activating a new drive and setting up a new watchfolder. A watchfolder
+      # cannot be moved, only deleted or created.
+      #
+      # @param [String] watch_folder_id The id of the watch folder
+      # @return [Hash]
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_disable(watch_folder_id)
-
         http_post("workflow/watchfolder/#{watch_folder_id}/disable")
       end
 
+      # The Reach Engine Query Language (RQL) can be used by both end users and developers building apps on the Reach
+      # Engine Platform. The implementation of RQL is designed to be loosely coupled with the underlying search engine,
+      # so additional implementations can be constructed for other search engines or databases.
+      #
+      # When performing a RQL query, specify the name of the property you would like to search against.
+      #
+      # Picklist values can be supplied by label or value.
+      #
+      # More traditional-looking upper-case SQL is supported. Both of the following syntax are supported:
+      #
+      #    name like 'cook'
+      #    name LIKE 'cook'
+      #
+      # Important! Some searches are case sensitive and only find exact matches to the value entered.
+      #
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # |     Search Type     |                          Description                           |                                   Example                                   |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Equals              | Returns all values that exactly match the value entered.       | name = 'cook'                                                               |  |
+      # |                     |                                                                | Finds all values where name equals cook. 										 				       |  |
+      # |											|                                                                | The following results would not be returned because                         |  |
+      # |                     |                                                                | they are not an exact match: cook1 or Cook.                                 |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Not equals          | Returns all values not matching the value entered.             | name != 'cook'                                                              |  |
+      # |                     |                                                                | Finds all values where name does not equal cook.                            |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Offsets and         | Pagination is controlled with the offset and size keywords.    | name = 'cook' offset 4 size 3                                               |  |
+      # | pagination          |                                                                | Returns results in groups of 3, 4 results into the result set.              |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Like                | Returns values that contain the value entered.                 | name like 'ook'                                                             |  |
+      # |                     |                                                                | Performs a “contains” query on the field specified.                         |  |
+      # |									    |                                                           		 | Therefore, values such as looking and booking are returned. 								 |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Not like            | Returns values that do not contain the value entered.          | name not like 'ook'                                                         |  |
+      # |									    |																														     | Performs a 'does not contain' query on the field specified.                 |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | In                  | Returns all results that contain the values submitted.         | myList in ('one', 'two', 'three') 																			     |  |
+      # |									    |																														     | Performs a query where 'myList' contains values one, two, or three.         |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Not in              | Returns all results that do not contain the value submitted.   | myList not in ('one', 'two', 'three')                                       |  |
+      # |									    |																														     | Performs a query where 'myList' does not contain values one, two, or three. |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Between             | Returns values between two dates, integers, or numbers.        | myDate between '2013/10/01' and '2013/10/05'                                |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Is null             | Returns all fields that are blank or null.                     | aField is null                                                              |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Greater Than /      | 'greater than' and 'greater than or equals' are                | price gt ‘12.99' dateUpdated gte '2012-10-01’                               |  |
+      # | Greater Than Equals | represented with the 'gt' and 'gte' symbols.                   |                                                                             |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Less Than /         | 'less than' and 'less than or equals' are                      | price lt 12.99 dateUpdated lte '2012-10-01'                                 |  |
+      # | Less Than Equals    | represented with the 'lt' and 'lte' symbols.                   |                                                                             |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Sorts               | Sorts by a field. Multiple sorts are allowed and are separated | name = 'cook' order by dateUpdated asc                                      |  |
+      # |                     | by a comma.                                                    | name = 'cook' order by dateUpdated asc, name desc                           |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      # | Ands and Ors        | Used to group expressions.                                     | (name = 'Bruce Wayne' or systemKeywords like 'batman') and cowled = 'true'  |  |
+      # |                     | Order of operations gives precedence to and, but order can     |                                                                             |  |
+      # |                     | be controlled with parentheses.                                |                                                                             |  |
+      # +---------------------+----------------------------------------------------------------+-----------------------------------------------------------------------------+--+
+      #
+      # @param [Hash] args
+      # @option args [String] :rql The RQL statement
+      # @option args [String|Array<String>] :types An array of types or a string consisting of a pipe-separated list of
+      # types you would like to search against.
       def search(args = { })
         types = args[:types]
         rql = args[:rql] || args[:query]
