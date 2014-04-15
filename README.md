@@ -54,20 +54,77 @@ Reach Engine API Executable [bin/reach_engine]
 #### Examples of Usage:
 
 ##### Accessing help.
-  ./reach_engine --help
+    ./reach_engine --help
 
 ##### Search Assets
-  ./reach_engine asset_search
+    ./reach_engine asset_search
 
 ##### Asset Detail
-  ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
+    ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
 
 ##### Search Clips
-  ./reach_engine clip_search
+    ./reach_engine clip_search
 
 ##### Clip Detail
-  ./reach_engine clip_detail 12345678-abc1-4321-a11b-43ac890bd789
+    ./reach_engine clip_detail 12345678-abc1-4321-a11b-43ac890bd789
 
+##### Collection Create
+    ./reach_engine collection_create "Collection Name" '{"fieldName":"value"}'
+
+##### Collection Detail
+    ./reach_engine collection_detail 12345678-abc1-4321-a11b-43ac890bd789
+
+##### Collection Member Add
+    ./reach_engine collection_member_add Clip 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+
+##### Collection Member Remove
+    ./reach_engine collection_member_remove f576b779-07cb-4f52-9e59-695ddbc2eb1d Clip e8d497db-4f14-483a-ab1b-9db440e2f729
+
+##### Collection Member Search
+    ./reach_engine collection_member_search 9f7d4d7f-921c-4ab1-88c8-ff95f15d741c
+
+##### Search
+    ./reach_engine search '{"types":"ImageAssetMaster|Project|Timeline", "rql":"name LIKE \\\\'ubiquity\\\\' SIZE 100 OFFSET 0 ORDER_BY dateUpdated DESC"}'
+
+##### Timeline Clips
+    ./reach_engine timeline_clips 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+
+##### Timeline Detail
+    ./reach_engine timeline_detail 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+
+##### Timeline Search
+    ./reach_engine timeline_search '{"search":"Mickey","media":"video"}'
+
+##### Watch Folder Create
+    ./reach_engine watch_folder_create '{"name":"API Watchfolder","watch_folder":"/Users/guest/Desktop/hot_folder/APITest","max_concurrent":3,"delete_on_success":false,"workflow_key":"ingestAssetToCollection","file_data_def":"fileToIngest","contextData":{"targetCollection":"[AssetCollection.200]"}}'
+
+##### Watch Folder Disable
+    ./reach_engine watch_folder_disable 5194576f30045c8f72d99afa
+
+##### Watch Folder Enable
+    ./reach_engine watch_folder_enable 5194576f30045c8f72d99afa
+
+##### Watch Folder Search
+    ./reach_engine watch_folder_search
+
+##### Workflow Detail
+    ./reach_engine watch_folder_detail _archiveCollectionContents
+
+##### Workflow Query
+    ./reach_engine workflow_query
+    ./reach_engine workflow_query '{"subject_class":"AssetCollection"}'
+
+##### Workflow Resume
+    ./reach_engine workflow_resume _archiveCollectionContents
+
+##### Workflow Start
+    ./reach_engine workflow_execution_start _archiveCollectionContents
+
+##### Workflow Status
+    ./reach_engine workflow_execution_status _archiveCollectionContents
+
+##### Workflow Stop
+    ./reach_engine workflow_execution_stop _archiveCollectionContents
 
 
 ## Contributing
