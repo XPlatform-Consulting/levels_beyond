@@ -61,6 +61,7 @@ module LevelsBeyond
           args[:workflow_key] ||= '_ingestAssetToCollection'
           args[:enabled] = args.fetch(:enabled, true)
           args[:delete_on_success] = args.fetch(:delete_on_success, false)
+          args[:file_data_def] ||= 'fileToIngest'
           watch_folder_create(args)
         end
 
