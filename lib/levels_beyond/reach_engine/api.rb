@@ -382,7 +382,9 @@ module LevelsBeyond
         query = merge_additional_parameters(query, add_params, args)
         http_get('clip', query)
       end
-      API_METHOD_PARAMETERS[:clip_search] = [
+      alias :clips :clip_find
+      alias :clip_search :clip_find
+      API_METHOD_PARAMETERS[:clip_find] = [
         { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
         { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
         :search,
