@@ -564,10 +564,11 @@ module LevelsBeyond
       end
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Watchfolders
-      def watch_folder_search
+      def watch_folder_find
         http_get('workflow/watchfolder')
       end
-      alias :watch_folders :watch_folder_search
+      alias :watch_folders :watch_folder_find
+      alias :watch_folder_search :watch_folder_find
 
       # Creates a new watchfolder at the configured path. By default, watchfolders are created but not enabled.
       # To enable a watchfolder, either set the "enabled" property when creating, or call the /enable method later.
@@ -611,13 +612,15 @@ module LevelsBeyond
         :context_data
       ]
 
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_enable(watch_folder_id)
-        # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
+
         http_post("workflow/watchfolder/#{watch_folder_id}/enable")
       end
 
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_disable(watch_folder_id)
-        # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
+
         http_post("workflow/watchfolder/#{watch_folder_id}/disable")
       end
 
