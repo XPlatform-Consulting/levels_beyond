@@ -31,7 +31,7 @@ module LevelsBeyond
           watch_folder_enable(watch_folder_id)
         end
 
-        def disable_watch_folder_by_path(args = { })
+        def disable_watch_folder_by_path(watch_folder_path)
           watch_folder = watch_folder_by_path(watch_folder_path)
           watch_folder_id = watch_folder['']
           watch_folder_disable(watch_folder_id)
