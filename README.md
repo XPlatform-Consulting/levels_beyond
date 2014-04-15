@@ -96,7 +96,7 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine timeline_search '{"search":"Mickey","media":"video"}'
 
 ##### Watch Folder Create
-    ./reach_engine watch_folder_create '{"name":"API Watchfolder","watch_folder":"/Users/guest/Desktop/hot_folder/APITest","max_concurrent":3,"delete_on_success":false,"workflow_key":"ingestAssetToCollection","file_data_def":"fileToIngest","contextData":{"targetCollection":"[AssetCollection.200]"}}'
+    ./reach_engine watch_folder_create '{"name":"API Watchfolder 23432","watch_folder":"/mnt/XPlatformSAN/zReachEngineDATA/media/temp/xplatform60/","max_concurrent":3,"delete_on_success":false,"workflow_key":"ingestAssetToCollection","file_data_def":"fileToIngest","subject": "[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]","contextData":{}}'
 
 ##### Watch Folder Disable
     ./reach_engine watch_folder_disable 5194576f30045c8f72d99afa
@@ -107,7 +107,7 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Watch Folder Search
     ./reach_engine watch_folder_search
 
-##### Workflow Detail
+##### Watch Folder Detail
     ./reach_engine watch_folder_detail _archiveCollectionContents
 
 ##### Workflow Query
