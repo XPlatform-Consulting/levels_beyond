@@ -291,8 +291,12 @@ module LevelsBeyond
         @parsed_response
       end # parsed_response
 
+
+      # @!group API Methods
+
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
       def asset_search(args = { })
-        # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
+
         add_params = [
           { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
           { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
@@ -304,12 +308,12 @@ module LevelsBeyond
       end
       alias :assets :asset_search
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
       def asset_detail(id)
         http_get("asset/#{id}")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
       def timeline_search(args = { })
         add_params = [
           { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
@@ -322,17 +326,17 @@ module LevelsBeyond
       end
       alias :timelines :timeline_search
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Detail
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Detail
       def timeline_detail(id)
         http_get("timeline/#{id}")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Clips
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Clips
       def timeline_clips(id)
         http_get("timeline/#{id}/clips")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
       def clip_search(args = { })
         add_params = [
           { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
@@ -344,12 +348,12 @@ module LevelsBeyond
         http_get('clip', query)
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Clip+Detail
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Clip+Detail
       def clip_detail(id)
         http_get("clip/#{id}")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
       def collection_search(args = { })
         add_params = [
           { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
@@ -362,19 +366,19 @@ module LevelsBeyond
       end
       alias :collections :collection_search
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
       def collection_detail(id)
         http_get("collection/#{id}")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Collections
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Collections
       def collection_create(name, metadata = { })
         data = { :name => name }
         data[:metadata] = metadata if metadata.respond_to?(:empty?) and !metadata.empty?
         http_post_json('collection', data)
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
       def collection_member_add(collection_id, member_class, member_id)
         data = {
           :class => member_class,
@@ -383,18 +387,18 @@ module LevelsBeyond
         http_post_json("collection/#{collection_id}/members", data)
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
       def collection_member_remove(collection_id, member_class, member_id)
         http_delete("collection/#{collection_id}/members/#{member_class}/#{member_id}")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collection+Members
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collection+Members
       def collection_member_search(collection_id)
         http_get("collection/#{id}/members")
       end
       alias :collection_members :collection_member_search
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Query+Workflows
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Query+Workflows
       def workflow_query(args = { })
         add_params = [ :subject_class ]
         query = merge_additional_parameters(query, add_params, args)
@@ -402,7 +406,7 @@ module LevelsBeyond
       end
       alias :workflows :workflow_query
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Workflow+Detail
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Workflow+Detail
       def workflow_detail(workflow_id)
         http_get("workflow/#{workflow_id}")
       end
@@ -427,7 +431,7 @@ module LevelsBeyond
       #       "currentStepDescription": "compress content files"
       #   }
       #
-      # (@see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Start+Workflow)
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Start+Workflow
       def workflow_start(id, args = { })
         add_params = [ { :name => :context_data } ]
         data = { }
@@ -438,8 +442,10 @@ module LevelsBeyond
       # @param [String] id One of the following IDs is required in the request:
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Workflow+Execution+Status
       def workflow_status(id)
-        # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Workflow+Execution+Status
+
         http_get("workflow/execution/#{id}")
       end
 
@@ -447,7 +453,7 @@ module LevelsBeyond
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
       #
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Stop+Workflow+Execution
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Stop+Workflow+Execution
       def workflow_stop(id)
         http_post("workflow/#{id}/stop")
       end
@@ -456,12 +462,12 @@ module LevelsBeyond
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
       #
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Resume+Workflow+Execution
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Resume+Workflow+Execution
       def workflow_resume(id)
         http_post("workflow/#{id}/resume")
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Watchfolders
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Watchfolders
       def watch_folder_search
         http_get('workflow/watchfolder')
       end
@@ -481,7 +487,20 @@ module LevelsBeyond
         ]
       end
 
-      # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Watchfolder
+      # Creates a new watchfolder at the configured path. By default, watchfolders are created but not enabled.
+      # To enable a watchfolder, either set the "enabled" property when creating, or call the /enable method later.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Watchfolder
+      #
+      # @param [Hash] args
+      # @option args [String] :name
+      # @option args [String] :watch_folder
+      # @option args [String] :workflow_key
+      # @option args [String] :file_data_def
+      # @option args [Array<String>] :subject
+      # @option args [Boolean] :enabled
+      # @option args [Boolean] :delete_on_success
+      # @option args [Integer] :max_concurrent
       def watch_folder_create(args = { })
         parameters = watch_folder_create_parameters
         data = process_parameters(parameters, args)
@@ -512,6 +531,8 @@ module LevelsBeyond
         query[:rql] = rql if rql
         http_get('search', query)
       end
+
+      # @!endgroup
 
     end
 
