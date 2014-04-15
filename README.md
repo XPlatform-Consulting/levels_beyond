@@ -75,7 +75,7 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine collection_detail 12345678-abc1-4321-a11b-43ac890bd789
 
 ##### Collection Member Add
-    ./reach_engine collection_member_add Clip 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+    ./reach_engine collection_member_add Cf576b779-07cb-4f52-9e59-695ddbc2eb1d lip 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
 
 ##### Collection Member Remove
     ./reach_engine collection_member_remove f576b779-07cb-4f52-9e59-695ddbc2eb1d Clip e8d497db-4f14-483a-ab1b-9db440e2f729
