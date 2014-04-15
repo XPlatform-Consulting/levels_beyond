@@ -284,7 +284,7 @@ module LevelsBeyond
         #logger.debug { "Parsing Response: #{response.content_type}" }
         return response unless response
         @parsed_response ||= case response.content_type
-                               when 'application/json'; JSON.parse(response.body)
+                               when 'application/json'; response.body.empty? ? '' : JSON.parse(response.body)
                                when 'text/html'; { } #HTMLResponseParser.parse(response.body)
                                else; response.respond_to?(:to_hash) ? response.to_hash : response.to_s
                              end

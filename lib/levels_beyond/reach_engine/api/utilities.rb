@@ -44,6 +44,19 @@ module LevelsBeyond
             current_watch_folder_path = watch_folder['watchFolder']
             return watch_folder if current_watch_folder_path == watch_folder_path
           end
+          nil
+        end
+
+        def enable_watch_folder_by_path(watch_folder_path)
+          watch_folder = watch_folder_by_path(watch_folder_path)
+          watch_folder_id = watch_folder['']
+          watch_folder_enable(watch_folder_id)
+        end
+
+        def disable_watch_folder_by_path(args = { })
+          watch_folder = watch_folder_by_path(watch_folder_path)
+          watch_folder_id = watch_folder['']
+          watch_folder_disable(watch_folder_id)
         end
 
         def search(args = { })

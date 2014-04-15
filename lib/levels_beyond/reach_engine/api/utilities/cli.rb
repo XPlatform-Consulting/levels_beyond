@@ -35,6 +35,7 @@ module LevelsBeyond
             remaining_command_line_arguments = op.remaining_command_line_arguments.dup
             options[:method_name] ||= remaining_command_line_arguments.shift
             options[:method_arguments] ||= remaining_command_line_arguments
+            #pp options
             options
           end
 
@@ -52,9 +53,14 @@ module LevelsBeyond
             args[:logger] = logger
 
             @api = LevelsBeyond::ReachEngine::API::Utilities.new(args)
+
             method_name = args[:method_name]
 
             if method_name
+              if method_name == 'methods'
+                methods = api.methods; methods -= Object.methods; methods.sort.each { |method| puts "#{method} #{api.method(method).parameters}" }
+                exit
+              end
               response = send(method_name, args[:method_arguments], args)
               output_response(response,args)
             end
@@ -85,12 +91,13 @@ module LevelsBeyond
 
             if method_arguments
               if method_arguments.is_a?(Array)
-                send_arguments = send_arguments + ( parse_method_arguments ? method_arguments : method_arguments.map { |v| v.is_a?(String) and v.start_with?('{', '[') ? JSON.parse(v) : v } )
+                send_arguments = send_arguments + ( parse_method_arguments ? method_arguments.map { |v| v.is_a?(String) and v.start_with?('{', '[') ? JSON.parse(v) : v } : method_arguments )
               else
                 method_arguments = JSON.parse(method_arguments) if method_arguments.is_a?(String) and method_arguments.start_with?('{', '[')
                 send_arguments << method_arguments
               end
             end
+
             logger.debug { "Send Arguments: #{send_arguments.inspect}" }
             api.__send__(*send_arguments)
           end

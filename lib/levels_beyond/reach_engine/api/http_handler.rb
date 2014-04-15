@@ -47,7 +47,7 @@ module LevelsBeyond
           #obj.body.inspect
           output = ''
           if obj.content_type == 'application/json'
-            if @log_pretty_print_body
+            if @log_pretty_print_body and !obj.body.empty?
               output << "\n"
               output << JSON.pretty_generate(JSON.parse(obj.body))
               return output

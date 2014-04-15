@@ -6,11 +6,11 @@ module LevelsBeyond
   module CLI
 
     LOGGING_LEVELS = {
-        :debug => Logger::DEBUG,
-        :info => Logger::INFO,
-        :warn => Logger::WARN,
-        :error => Logger::ERROR,
-        :fatal => Logger::FATAL
+      :debug => Logger::DEBUG,
+      :info => Logger::INFO,
+      :warn => Logger::WARN,
+      :error => Logger::ERROR,
+      :fatal => Logger::FATAL
     }
 
     class <<self
@@ -117,11 +117,11 @@ end
 
 def add_common_options(option_parser = common_option_parser, _options = (options || { }))
   _options[:log_to] ||= STDERR
-  _options[:log_level] ||= 1
+  _options[:log_level] ||= 0
   _options[:options_file_path] ||= option_parser.default_options_file_path if option_parser.respond_to?(:default_options_file_path)
-  option_parser.on('--[no-]options-file [FILENAME]', "\tdefault: #{_options[:options_file_path]}" ) { |v| options[:options_file_path] = v }
-  option_parser.on('--log-to FILENAME', 'Log file location.', "\tdefault: STDERR") { |v| options[:log_to] = v }
-  option_parser.on('--log-level LEVEL', cli_class::LOGGING_LEVELS.keys, "Logging level. Available Options: #{cli_class::LOGGING_LEVELS.keys.join(', ')}",
-                          "\tdefault: #{cli_class::LOGGING_LEVELS.invert[_options[:log_level]]}") { |v| options[:log_level] = cli_class::LOGGING_LEVELS[v] }
-  option_parser.on('-h', '--help', 'Show this message.') { puts common_option_parser; exit }
+  option_parser.on('--[no-]options-file [FILENAME]', "\tdefault: #{_options[:options_file_path]}" ) { |v| _options[:options_file_path] = v }
+  option_parser.on('--log-to FILENAME', 'Log file location.', "\tdefault: STDERR") { |v| _options[:log_to] = v }
+  option_parser.on('--log-level LEVEL', LevelsBeyond::CLI::LOGGING_LEVELS.keys, "Logging level. Available Options: #{LevelsBeyond::CLI::LOGGING_LEVELS.keys.join(', ')}",
+                          "\tdefault: #{LevelsBeyond::CLI::LOGGING_LEVELS.invert[_options[:log_level]]}") { |v| _options[:log_level] = LevelsBeyond::CLI::LOGGING_LEVELS[v] }
+  option_parser.on('-h', '--help', 'Show this message.') { puts option_parser; exit }
 end
