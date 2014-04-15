@@ -44,7 +44,7 @@ Reach Engine API Executable [bin/reach_engine]
         --[no-]log-pretty-print-body Determines if the request and response bodies are pretty printed in the log output.
         --[no-]pretty-print          Determines if the output JSON is pretty printed
         --[no-]options-file [FILENAME]
-                                      default: /Users/jw/Dropbox/projects/DC/work/levels_beyond/bin/reach_engine_options
+                                      default: /Users/xplatformconsulting/development/levels_beyond/bin/reach_engine_options
         --log-to FILENAME            Log file location.
                                       default: STDERR
         --log-level LEVEL            Logging level. Available Options: debug, info, warn, error, fatal
