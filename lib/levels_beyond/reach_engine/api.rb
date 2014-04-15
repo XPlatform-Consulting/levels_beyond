@@ -594,9 +594,9 @@ module LevelsBeyond
         parameters = api_method_parameters(__method__)
         data = process_parameters(parameters, args)
 
-        # FORCE SUBJECT TO BE AN ARRAY
-        subject = data[:subject]
-        data[:subject] = [*subject] if subject
+        # # FORCE SUBJECT TO BE AN ARRAY
+        # subject = data[:subject]
+        # data[:subject] = [*subject] if subject
 
         return http_post_json('workflow/watchfolder', data)
       end
