@@ -7,28 +7,6 @@ module LevelsBeyond
 
       class Utilities < API
 
-        class ArgumentsHandler
-
-          def values
-            @values ||= { }
-          end
-
-          def initialize(values, options = { })
-            values.map { |k,v| [ k.to_s.sub('_', '').downcase, v ] }
-          end
-
-          def []=(key, value)
-            k = key.to_s.sub('_', '').downcase
-            @values[k] = value
-          end
-
-          def [](key)
-            k = key.to_s.sub('_', '').downcase
-            @values[k]
-          end
-
-        end
-
         DEFAULT_ASSET_INGEST_ANY_WORKFLOW_ID = '_anyAssetIngest'
         attr_accessor :default_asset_ingest_any_workflow_id
 
