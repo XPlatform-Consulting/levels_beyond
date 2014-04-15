@@ -299,34 +299,67 @@ module LevelsBeyond
 
       # @!group API Methods
 
+      # The Asset Search method uses a search term, as well as optional parameters, to find assets within the Reach
+      # Engine Studio. The method returns a list of assets that matches the parameters provided, if any. If no search
+      # term or other parameters are specified, the response contains up to 50 assets. More assets can be returned with
+      # additional Find Assets requests using the FetchIndex parameter.
+      #
+      # @param [Hash] args
+      # @option args [String] :search The term to match against. Search terms are sent through a search engine, and
+      # search all text in a document. Search supports partial words and similar words, but not wild cards. If no
+      # parameter is offered, all assets are returned up to the default limit of 50.
+      # @option args [String] :media Limits the media types returned. Valid values are "video", "audio", or "image".
+      # @option args [Integer] :fetch_index Defines the start index of the results. E.g., "15" would start the results
+      # on the fifteenth item returned. Used with fetchLimit for pagination controls.
+      # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
+      # search is limited to 50 results.
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
-      def asset_search(args = { })
+      def asset_find(args = { })
         add_params = api_method_parameters(__method__)
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('asset', query)
       end
-      alias :assets :asset_search
-      API_METHOD_PARAMETERS[:asset_search] = [
+      alias :assets :asset_find
+      alias :asset_search :asset_fin
+      API_METHOD_PARAMETERS[:asset_find] = [
         { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
         { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
         :search,
       ]
 
+      # The Asset Detail method uses an asset ID (that can be found using the Find Assets method) to view asset details
+      # such as name, asset type, and media information (e.g., for video, information includes duration,
+      # audio language, aspect ratio, and mime type).
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
       def asset_detail(id)
         http_get("asset/#{id}")
       end
 
+      # The Find Timelines method uses a search term to find timelines within the Reach Engine Studio. The method 
+      # returns a list of timelines that matches the parameters provided, if any. If no search term or other parameters 
+      # are specified, the response contains up to 50 timelines. More timelines can be returned with additional Find 
+      # Timelines requests using the FetchIndex parameter.
+      #
+      # @param [Hash] args
+      # @option args [String] :search The term to match against. Search terms are sent through a search engine, and
+      # search all text in a document. Search supports partial words and similar words, but not wild cards. If no
+      # parameter is offered, all assets are returned up to the default limit of 50.
+      # @option args [String] :media Limits the media types returned. Valid values are "video", "audio", or "image".
+      # @option args [Integer] :fetch_index Defines the start index of the results. E.g., "15" would start the results
+      # on the fifteenth item returned. Used with fetchLimit for pagination controls.
+      # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
+      # search is limited to 50 results.
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
-      def timeline_search(args = { })
+      def timeline_find(args = { })
         add_params = api_method_parameters(__method__)
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('timeline', query)
       end
-      alias :timelines :timeline_search
-      API_METHOD_PARAMETERS[:timeline_search] = [
+      alias :timelines :timeline_find
+      alias :timeline_search :timeline_find
+      API_METHOD_PARAMETERS[:timeline_find] = [
           { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
           { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
           :search,
@@ -343,7 +376,7 @@ module LevelsBeyond
       end
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
-      def clip_search(args = { })
+      def clip_find(args = { })
         add_params = api_method_parameters(__method__)
         query = { }
         query = merge_additional_parameters(query, add_params, args)
@@ -360,9 +393,9 @@ module LevelsBeyond
         http_get("clip/#{id}")
       end
 
-      # The Collections Search method uses a search term to find collections within the Reach Engine Studio.
+      # The Find Collections method uses a search term to find collections within the Reach Engine Studio.
       # If no search term or other parameters are provided, the response contains up to 50 collections.
-      # More collections can be returned with additional Collections Search requests using the Fetch Index parameter.
+      # More collections can be returned with additional Find Collections requests using the Fetch Index parameter.
       #
       # @param [Hash] args
       # @option args [String] :search
@@ -370,15 +403,16 @@ module LevelsBeyond
       # @option args [Integer] :fetch_limit
       # @return [Hash]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
-      def collection_search(args = { })
+      def collection_find(args = { })
         add_params = api_method_parameters(__method__)
 
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('collection', query)
       end
-      alias :collections :collection_search
-      API_METHOD_PARAMETERS[:collection_search] = [
+      alias :collections :collection_find
+      alias :collection_search :collection_find
+      API_METHOD_PARAMETERS[:collection_find] = [
         { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
         { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
         :search,
@@ -417,12 +451,13 @@ module LevelsBeyond
       # therefore, if collection members have been added during a prior request, the existing collection members, in
       # addition to the newly added collection member, will all display in the response.
       #                                                                                                                                                                                                                                                                                                                                                                                                                    #
+      # @param [String] collection_id The Collection UUID (universally unique identifier).
       # @param [String] member_class The type of the asset to be added to the Collection.
       #                              Valid values include "AssetMaster", "Timeline", and "Clip".
       # @param [String] member_id The UUID (universally unique identifier) of the asset.
       # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
-      def collection_member_add(member_class, member_id)
+      def collection_member_add(collection_id, member_class, member_id)
         data = {
           :class => member_class,
           :id => member_id
@@ -452,14 +487,16 @@ module LevelsBeyond
       # @param [String] collection_id
       # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collection+Members
-      def collection_member_search(collection_id)
-        http_get("collection/#{id}/members")
+      def collection_member_find(collection_id)
+        http_get("collection/#{collection_id}/members")
       end
-      alias :collection_members :collection_member_search
+      alias :collection_members :collection_member_find
+      alias :collection_member_search :collection_member_find
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Query+Workflows
       def workflow_query(args = { })
         add_params = [ :subject_class ]
+        query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('workflow', query)
       end
@@ -538,14 +575,20 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Watchfolder
       #
       # @param [Hash] args
-      # @option args [String] :name
-      # @option args [String] :watch_folder
-      # @option args [String] :workflow_key
-      # @option args [String] :file_data_def
+      # @option args [String] :name The name of the watchfolder to be created.
+      # @option args [String] :watch_folder The file system path to the new watchfolder.
+      # @option args [String] :workflow_key The ID of the workflow to call when a file is placed into the watchfolder.
+      # @option args [String] :file_data_def The file that is detected in the watchfolder must be assigned to a data
+      # def in the workflow defined by workflowKey. This value must match a File data def in the target workflow.
       # @option args [Array<String>] :subject
-      # @option args [Boolean] :enabled
-      # @option args [Boolean] :delete_on_success
-      # @option args [Integer] :max_concurrent
+      # @option args [Boolean] :enabled Whether or not the watchfolder is enabled. Defaults to "false".
+      # @option args [Boolean] :delete_on_success Whether to delete the file in the watchfolder after processing.
+      # Defaults is "false".
+      # @option args [Integer] :max_concurrent The maximum number of files to process at a time. Defaults to 1.
+      # @option args [Hash] :context_data Optionally pass other context data into the workflow defined by workflowKey
+      # when a file is to be processed by the workflow. This hash's keys should each be the name of a data def in the
+      # workflow, and the value being a valid value for the data def's type
+      # (i.e., if type is "Integer" value must be a valid number).
       def watch_folder_create(args = { })
         parameters = api_method_parameters(__method__)
         data = process_parameters(parameters, args)
@@ -564,7 +607,8 @@ module LevelsBeyond
         :subject,
         :enabled,
         :delete_on_success,
-        :max_concurrent
+        :max_concurrent,
+        :context_data
       ]
 
       def watch_folder_enable(watch_folder_id)
