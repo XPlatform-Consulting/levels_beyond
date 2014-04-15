@@ -23,6 +23,7 @@ module LevelsBeyond
       DEFAULT_SERVER_PORT = 8080
       DEFAULT_BASE_PATH = '/reachengine/api/v1/'
 
+      API_METHOD_PARAMETERS = { }
 
       def initialize(args = { })
         initialize_logger(args)
@@ -292,21 +293,25 @@ module LevelsBeyond
       end # parsed_response
 
 
+      def api_method_parameters(method_name)
+        cached_method_parameters[method_name] ||= API_METHOD_PARAMETERS[method_name]
+      end
+
       # @!group API Methods
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
       def asset_search(args = { })
-
-        add_params = [
-          { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
-          { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
-          :search,
-        ]
+        add_params = api_method_parameters(__method__)
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('asset', query)
       end
       alias :assets :asset_search
+      API_METHOD_PARAMETERS[:asset_search] = [
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+        :search,
+      ]
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
       def asset_detail(id)
@@ -315,16 +320,17 @@ module LevelsBeyond
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
       def timeline_search(args = { })
-        add_params = [
-          { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
-          { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
-          :search,
-        ]
+        add_params = api_method_parameters(__method__)
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('timeline', query)
       end
       alias :timelines :timeline_search
+      API_METHOD_PARAMETERS[:timeline_search] = [
+          { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+          { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+          :search,
+      ]
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Detail
       def timeline_detail(id)
@@ -338,48 +344,85 @@ module LevelsBeyond
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
       def clip_search(args = { })
-        add_params = [
-          { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
-          { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
-          :search,
-        ]
+        add_params = api_method_parameters(__method__)
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('clip', query)
       end
+      API_METHOD_PARAMETERS[:clip_search] = [
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+        :search,
+      ]
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Clip+Detail
       def clip_detail(id)
         http_get("clip/#{id}")
       end
 
+      # The Collections Search method uses a search term to find collections within the Reach Engine Studio.
+      # If no search term or other parameters are provided, the response contains up to 50 collections.
+      # More collections can be returned with additional Collections Search requests using the Fetch Index parameter.
+      #
+      # @param [Hash] args
+      # @option args [String] :search
+      # @option args [Integer] :fetch_index
+      # @option args [Integer] :fetch_limit
+      # @return [Hash]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
       def collection_search(args = { })
-        add_params = [
-          { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
-          { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
-          :search
-        ]
+        add_params = api_method_parameters(__method__)
+
         query = { }
         query = merge_additional_parameters(query, add_params, args)
         http_get('collection', query)
       end
       alias :collections :collection_search
+      API_METHOD_PARAMETERS[:collection_search] = [
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+        :search,
+      ]
 
+      # Collection Details uses a collection ID (found using the Find Collections method) to view details about
+      # specific collection. Details returned in the response include geographic information as well as review comments.
+      #
+      # @param [String] id The UUID (universally unique identifier) of the collection
+      # @return [Hash]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
       def collection_detail(id)
         http_get("collection/#{id}")
       end
 
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Collections
+      # Creates a new collection, ready for member insertion, using the collection name provided in the request. After
+      # a new collection is created, use the Add Collection Member methods to add member items.
+      #
+      # Note: For collection naming conventions, spaces and special characters are allowed, as well as duplicate names.
+      # What differentiates same-name collections is the meta data (image, timestamp, etc.) and the reference ID.
+      #
+      # @param [String] name The name of the Collection to be created.
+      # @param [Hash] metadata A hash with metadata key/value pairs for this collection.
       def collection_create(name, metadata = { })
         data = { :name => name }
         data[:metadata] = metadata if metadata.respond_to?(:empty?) and !metadata.empty?
         http_post_json('collection', data)
       end
 
+      # The Collection Member Add method sends a collection ID and specifies the asset type and ID to add to the
+      # collection. IDs are automatically created when a video is uploaded. Only one collection member can be
+      # added in a single request.
+      #
+      # The Collection Member Add response contains information about the clip, including the clip name (provided by
+      # the user when the clip was created) and clip ID. The response displays all associated members in the response;
+      # therefore, if collection members have been added during a prior request, the existing collection members, in
+      # addition to the newly added collection member, will all display in the response.
+      #                                                                                                                                                                                                                                                                                                                                                                                                                    #
+      # @param [String] member_class The type of the asset to be added to the Collection.
+      #                              Valid values include "AssetMaster", "Timeline", and "Clip".
+      # @param [String] member_id The UUID (universally unique identifier) of the asset.
+      # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
-      def collection_member_add(collection_id, member_class, member_id)
+      def collection_member_add(member_class, member_id)
         data = {
           :class => member_class,
           :id => member_id
@@ -387,11 +430,27 @@ module LevelsBeyond
         http_post_json("collection/#{collection_id}/members", data)
       end
 
+      # The Collection Member Remove method sends a collection ID and specifies the member class and member ID to
+      # remove from the collection. To determine the member class and ID, use the Collection Member method. No more
+      # than one member can be removed in a single request.
+      #
+      # @param [String] collection_id The Collection UUID (universally unique identifier).
+      # @param [String] member_class The class of the member to remove. This value should match the "class" property in
+      # the member JSON structure from a query result.
+      # @param [String] member_id The UUID of the member to remove. This value should match the "id" property in the
+      # member JSON structure from a query result.
+      # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
       def collection_member_remove(collection_id, member_class, member_id)
         http_delete("collection/#{collection_id}/members/#{member_class}/#{member_id}")
       end
 
+      # A collection member is an asset within a collection. An asset collection contains collection members, and
+      # assets can belong to more than one collection. However, it is not possible to nest collections (you cannot have
+      # a collection of collections).
+      #
+      # @param [String] collection_id
+      # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collection+Members
       def collection_member_search(collection_id)
         http_get("collection/#{id}/members")
@@ -432,7 +491,7 @@ module LevelsBeyond
       #   }
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Start+Workflow
-      def workflow_start(id, args = { })
+      def workflow_execution_start(id, args = { })
         add_params = [ { :name => :context_data } ]
         data = { }
         data = merge_additional_parameters(data, add_params, args)
@@ -444,7 +503,7 @@ module LevelsBeyond
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Workflow+Execution+Status
-      def workflow_status(id)
+      def workflow_execution_status(id)
 
         http_get("workflow/execution/#{id}")
       end
@@ -454,7 +513,7 @@ module LevelsBeyond
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Stop+Workflow+Execution
-      def workflow_stop(id)
+      def workflow_execution_stop(id)
         http_post("workflow/#{id}/stop")
       end
 
@@ -463,7 +522,7 @@ module LevelsBeyond
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Resume+Workflow+Execution
-      def workflow_resume(id)
+      def workflow_execution_resume(id)
         http_post("workflow/#{id}/resume")
       end
 
@@ -472,20 +531,6 @@ module LevelsBeyond
         http_get('workflow/watchfolder')
       end
       alias :watch_folders :watch_folder_search
-
-
-      def watch_folder_create_parameters
-        cached_method_parameters[__method__] ||= [
-          { :name => :name,           :required => true },
-          { :name => :watch_folder,   :required => true },
-          { :name => :workflow_key,   :required => true },
-          { :name => :file_data_def,  :required => true },
-          :subject,
-          :enabled,
-          :delete_on_success,
-          :max_concurrent
-        ]
-      end
 
       # Creates a new watchfolder at the configured path. By default, watchfolders are created but not enabled.
       # To enable a watchfolder, either set the "enabled" property when creating, or call the /enable method later.
@@ -502,7 +547,7 @@ module LevelsBeyond
       # @option args [Boolean] :delete_on_success
       # @option args [Integer] :max_concurrent
       def watch_folder_create(args = { })
-        parameters = watch_folder_create_parameters
+        parameters = api_method_parameters(__method__)
         data = process_parameters(parameters, args)
 
         # FORCE SUBJECT TO BE AN ARRAY
@@ -511,6 +556,16 @@ module LevelsBeyond
 
         return http_post_json('workflow/watchfolder', data)
       end
+      API_METHOD_PARAMETERS[:watch_folder_create] = [
+        { :name => :name,           :required => true },
+        { :name => :watch_folder,   :required => true },
+        { :name => :workflow_key,   :required => true },
+        { :name => :file_data_def,  :required => true },
+        :subject,
+        :enabled,
+        :delete_on_success,
+        :max_concurrent
+      ]
 
       def watch_folder_enable(watch_folder_id)
         # https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
@@ -531,6 +586,7 @@ module LevelsBeyond
         query[:rql] = rql if rql
         http_get('search', query)
       end
+      API_METHOD_PARAMETERS[:search] = [ :types, :rql ]
 
       # @!endgroup
 
