@@ -75,7 +75,7 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine collection_detail 12345678-abc1-4321-a11b-43ac890bd789
 
 ##### Collection Member Add
-    ./reach_engine collection_member_add Cf576b779-07cb-4f52-9e59-695ddbc2eb1d lip 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+    ./reach_engine collection_member_add Cf576b779-07cb-4f52-9e59-695ddbc2eb1d Clip 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
 
 ##### Collection Member Remove
     ./reach_engine collection_member_remove f576b779-07cb-4f52-9e59-695ddbc2eb1d Clip e8d497db-4f14-483a-ab1b-9db440e2f729
@@ -107,8 +107,8 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Watch Folder Search
     ./reach_engine watch_folder_search
 
-##### Watch Folder Detail
-    ./reach_engine watch_folder_detail _archiveCollectionContents
+##### Workflow Detail
+    ./reach_engine workflow_detail _archiveCollectionContents
 
 ##### Workflow Query
     ./reach_engine workflow_query
@@ -126,11 +126,23 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Workflow Stop
     ./reach_engine workflow_execution_stop _archiveCollectionContents
 
+## FUTURE SYNTAX
+    ./reach_engine collection_detail '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
+    ./reach_engine collection_member_add '{"collection_name":"Collection Name", "collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "clip_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
+    ./reach_engine collection_member_remove '{"collection_name":"Collection Name", "collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "clip_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
+    ./reach_engine collection_member_search '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
+    ./reach_engine timeline_clips '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
+    ./reach_engine timeline_detail '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
+    ./reach_engine watch_folder_disable  '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
+    ./reach_engine watch_folder_enable  '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
+    ./reach_engine workflow_detail  '{"workflow_id":"5194576f30045c8f72d99afa"}'
 
 ## Contributing
 
-1. Fork it ( http://github.com/<my-github-username>/levels_beyond/fork )
+1. Fork it ( https://github.com/XPlatform-Consulting/levels_beyond/fork )
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+
