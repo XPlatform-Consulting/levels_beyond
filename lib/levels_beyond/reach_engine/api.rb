@@ -321,7 +321,7 @@ module LevelsBeyond
         http_get('asset', query)
       end
       alias :assets :asset_find
-      alias :asset_search :asset_fin
+      alias :asset_search :asset_find
       API_METHOD_PARAMETERS[:asset_find] = [
         { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
         { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
