@@ -581,7 +581,7 @@ module LevelsBeyond
       # @option args [String] :workflow_key The ID of the workflow to call when a file is placed into the watchfolder.
       # @option args [String] :file_data_def The file that is detected in the watchfolder must be assigned to a data
       # def in the workflow defined by workflowKey. This value must match a File data def in the target workflow.
-      # @option args [Array<String>] :subject
+      # @option args [String] :subject
       # @option args [Boolean] :enabled Whether or not the watchfolder is enabled. Defaults to "false".
       # @option args [Boolean] :delete_on_success Whether to delete the file in the watchfolder after processing.
       # Defaults is "false".
