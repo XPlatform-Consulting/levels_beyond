@@ -6,8 +6,8 @@ require 'levels_beyond/version'
 Gem::Specification.new do |spec|
   spec.name          = 'levels_beyond'
   spec.version       = LevelsBeyond::VERSION
-  spec.authors       = ['John Whitson']
-  spec.email         = ['john.whitson@gmail.com']
+  spec.authors       = ['John Whitson', 'Nicholas Stokes']
+  spec.email         = ['john.whitson@gmail.com', 'nicholas.stokes@gmail.com']
   spec.summary       = %q{A library for interacting with Levels Beyond's Products.}
   spec.description   = %q{}
   spec.homepage      = ''
