@@ -60,7 +60,6 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Searching against asset using a combination of named parameters
     ./reach_engine asset_search
 
-##### Create Assets
 ##### Create an Asset from a mount point accessible to Reach Engine
     ./reach_engine asset_create
 
@@ -76,6 +75,9 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Clip Detail
     ./reach_engine clip_detail 12345678-abc1-4321-a11b-43ac890bd789
 
+##### Collection Search
+    ./reach_engine collection_search
+    
 ##### Collection Create
     ./reach_engine collection_create "Collection Name" '{"fieldName":"value"}'
 
@@ -136,6 +138,7 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine workflow_execution_stop _archiveCollectionContents
 
 ## FUTURE SYNTAX
+    ./reach_engine create_asset '{"file_to_ingest":"/SomeFolder/SomeFile.mov", "workflow_id":"_assetAnyIngest"}'
     ./reach_engine collection_detail '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
     ./reach_engine collection_member_add '{"collection_name":"Collection Name", "collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "clip_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
     ./reach_engine collection_member_remove '{"collection_name":"Collection Name", "collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "clip_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
