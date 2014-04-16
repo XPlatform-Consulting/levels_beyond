@@ -32,21 +32,19 @@ module LevelsBeyond
         @server_port = args[:server_port] || DEFAULT_SERVER_PORT
         @api_key = args[:api_key]
 
-        @parse_response = args.fetch(:parse_response, true)
-        initialize_http_handler(args)
 
         @base_path = args[:api_base_path] ||= DEFAULT_BASE_PATH
         #@base_query = { :apiKey => api_key, :fetchIndex => 0, :fetchLimit => 50 }
         @base_query = { :apiKey => api_key }
+
+        @parse_response = args.fetch(:parse_response, true)
+        initialize_http_handler(args)
+
       end
 
       def initialize_logger(args = { })
         @logger = args[:logger] ||= Logger.new(STDERR)
       end
-
-      def default_options
-        @default_options
-      end # default_options
 
       def cached_method_parameters
         @cached_method_parameters ||= { }
@@ -57,39 +55,6 @@ module LevelsBeyond
       def initialize_http_handler(args = {})
         @http = HTTPHandler.new(args)
         logger.debug { "Connection Set: #{http.to_s}" }
-      end
-
-      def hash_to_query(hash)
-        return URI.encode(hash.map{|k,v| "#{snake_case_to_lower_camel_case(k.to_s)}=#{v}"}.join('&'))
-      end
-
-      def process_post_data(data, options = { })
-        recursive = options.fetch(recursive, options.fetch(:process_post_data_recursively, true))
-        case data
-          when Array
-            data.map { |d| process_post_data(d) }
-          when Hash
-            if recursive
-              Hash[ data.map { |k,v| [ snake_case_to_lower_camel_case(k.to_s), process_post_data(v, options) ] } ]
-            else
-              Hash[ data.map { |k,v| [ snake_case_to_lower_camel_case(k.to_s), v ] } ]
-            end
-          else
-            data
-        end
-      end
-
-      def process_path(path, query = { })
-        query = base_query.merge(query)
-        query_str = hash_to_query(query)
-        path = path[1..-1] while path.end_with?('/')
-        path = "#{base_path}#{path}#{query_str and !query_str.empty? ? "?#{query_str}" : ''}"
-        logger.debug { "Processed Path: #{path}"}
-        path
-      end
-
-      def snake_case_to_lower_camel_case(string)
-        string.gsub(/(?:_)(\w)/) { $1.upcase }
       end
 
       # @param [Symbol|String] parameter_name A symbol or string in snake case form
@@ -104,7 +69,7 @@ module LevelsBeyond
       end
 
       def filter_arguments(arguments, parameter_names, options = { })
-        parameter_names_normalized = Hash[[*parameter_names].map { |param_name| [ param_name.to_s.gsub('_', '').downcase, param_name ] } ]
+        parameter_names_normalized = parameter_names.is_a?(Hash) ? parameter_names : Hash[[*parameter_names].map { |param_name| [ param_name.to_s.gsub('_', '').downcase, param_name ] } ]
         arguments_normalized = normalize_arguments(arguments, options)
         logger.debug { "Normalized Arguments: #{PP.pp(arguments_normalized, '')}"}
         filtered_arguments = {}
@@ -120,14 +85,14 @@ module LevelsBeyond
         return filtered_arguments
       end
 
-
       def process_parameters(parameters, arguments, options = { })
         defaults = { }
         parameter_names = [ ]
         required_parameters = { }
-        parameters.each do |param|
+
+        [*parameters].each do |param|
           if param.is_a?(Hash)
-            parameter_name = param[:alias] || param[:name]
+            parameter_name = param[:name]
             defaults[parameter_name] = param[:default_value] if param.has_key?(:default_value)
             required_parameters[parameter_name] = param if param[:required]
           else
@@ -135,11 +100,22 @@ module LevelsBeyond
           end
           parameter_names << parameter_name
         end
-        logger.debug { "Processing Parameters: #{parameter_names}" }
+
+        logger.debug { "Processing Parameters: #{parameter_names.inspect}" }
         arguments_out = defaults.merge(filter_arguments(arguments, parameter_names, options))
         missing_required_parameters = required_parameters.keys - arguments_out.keys
         raise ArgumentError, "Missing Required Parameters: #{missing_required_parameters.join(', ')}" unless missing_required_parameters.empty?
         return arguments_out
+      end
+
+      # Looks up a methods parameters and matches arguments to those parameters
+      #
+      # @param [Symbol] method_name
+      # @param [Hash] arguments The arguments being passed into the method
+      # @param [Hash] options
+      def process_method_parameters(method_name, arguments, options = { })
+        parameters = api_method_parameters(method_name)
+        process_parameters(parameters, arguments, options)
       end
 
       # @param [Hash] params Parameters to merge into
@@ -148,153 +124,9 @@ module LevelsBeyond
         params.merge(process_parameters(add_params, args, options))
       end
 
-
-      # Executes a HTTP DELETE request
-      # @param [String] path
-      # @param [Hash] headers
-      # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-      # it's content type. If content type is not supported then the response body is returned.
-      #
-      # If parse_response? is false then the response body is returned.
-      def http_delete(path, query = { }, headers = {})
-        clear_response
-        path = process_path(path, query)
-        @success_code = 204
-        @response = http.delete(path, headers)
-        parse_response? ? parsed_response : response.body
-      end
-
-
-      # Executes a HTTP GET request and returns the response
-      # @param [String] path
-      # @param [Hash] headers
-      # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-      # it's content type. If content type is not supported then the response body is returned.
-      #
-      # If parse_response? is false then the response body is returned.
-      def http_get(path, query = { }, headers = { })
-        clear_response
-        path = process_path(path, query)
-        @success_code = 200
-        @response = http.get(path, headers)
-        parse_response? ? parsed_response : response.body
-      end
-
-      # Executes a HTTP POST request
-      # @param [String] path
-      # @param [String] data
-      # @param [Hash] headers
-      # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-      # it's content type. If content type is not supported then the response body is returned.
-      #
-      # If parse_response? is false then the response body is returned.
-      def http_post(path, data = { }, query = { }, headers = { })
-        clear_response
-        path = process_path(path, query)
-        @success_code = 201
-        @response = http.post(path, data, headers)
-        parse_response? ? parsed_response : response.body
-      end
-
-      # Formats data as form url encoded and calls {#http_post}
-      # @param [String] path
-      # @param [Hash] data
-      # @param [Hash] headers
-      # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-      # it's content type. If content type is not supported then the response body is returned.
-      #
-      # If parse_response? is false then the response body is returned.
-      def http_post_form(path, data = { }, query = { }, headers = { })
-        headers['Content-Type'] = 'application/x-www-form-urlencoded'
-        data = process_post_data(data)
-        #data_as_string = URI.encode_www_form(data)
-        http.post(path, data, query, headers)
-      end
-
-      # Formats data as JSON and calls {#http_put}
-      # @param [String] path
-      # @param [Hash] data
-      # @param [Hash] headers
-      # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-      # it's content type. If content type is not supported then the response body is returned.
-      #
-      # If parse_response? is false then the response body is returned.
-      def http_post_json(path, data = { }, query = { }, headers = { })
-        headers['Content-Type'] ||= 'application/json'
-        data = process_post_data(data)
-        data_as_string = JSON.generate(data)
-        http_post(path, data_as_string, query, headers)
-      end
-
-      #def http_post_form_multipart(path, data, headers = { })
-      #  headers['Content-Type'] = 'multipart/form-data'
-      #
-      #end # http_post_form_multipart
-
-
-      # Executes a HTTP PUT request
-      # @param [String] path
-      # @param [String] data
-      # @param [Hash] headers
-      # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
-      # it's content type. If content type is not support then the respond body is returned.
-      #
-      # If parse_response? is false then the response body is returned.
-      def http_put(path, data, headers = {})
-        clear_response
-        @success_code = 200
-        @response = http.put(path, data, headers)
-        parse_response? ? parsed_response : response.body
-      end
-
-      # Formats data as JSON and calls {#http_put}
-      def http_put_json(path, data, headers = { })
-        headers['content-type'] = 'application/json'
-        data = process_post_data(data)
-        data_as_string = JSON.generate(data)
-        http_put(path, data_as_string, headers)
-      end
-
-
-      # The http response code that indicates success for the request being made.
-      def success_code
-        @success_code
-      end
-
-      # Returns true if the response code equals the success code that was set by the method.
-      def success?
-        return nil unless success_code
-        response.code == success_code.to_s
-      end
-
-      def clear_response
-        @error = { }
-        @success_code = @response = @parsed_response = nil
-      end
-
-      # Returns true if the response body parsing option has been set to true.
-      def parse_response?
-        parse_response
-      end
-
-      # Parses the response body based on the response's content-type header value
-      # @return [nil|String|Hash]
-      #
-      # Will pass through the response body unless the content type is supported.
-      def parsed_response
-        #logger.debug { "Parsing Response: #{response.content_type}" }
-        return response unless response
-        @parsed_response ||= case response.content_type
-                               when 'application/json'; response.body.empty? ? '' : JSON.parse(response.body)
-                               when 'text/html'; { } #HTMLResponseParser.parse(response.body)
-                               else; response.respond_to?(:to_hash) ? response.to_hash : response.to_s
-                             end
-        @parsed_response
-      end # parsed_response
-
-
       def api_method_parameters(method_name)
-        cached_method_parameters[method_name] ||= API_METHOD_PARAMETERS[method_name]
+        #cached_method_parameters[method_name] ||= API_METHOD_PARAMETERS[method_name]
+        API_METHOD_PARAMETERS[method_name]
       end
 
       # @!group API Methods
@@ -316,10 +148,8 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
       def asset_find(args = { })
-        add_params = api_method_parameters(__method__)
-        query = { }
-        query = merge_additional_parameters(query, add_params, args)
-        http_get('asset', query)
+        query = process_method_parameters(__method__, args)
+        http.get('asset', query)
       end
       alias :assets :asset_find
       alias :asset_search :asset_find
@@ -335,7 +165,7 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
       def asset_detail(id)
-        http_get("asset/#{id}")
+        http.get("asset/#{id}")
       end
 
       # The Find Timelines method uses a search term to find timelines within the Reach Engine Studio. The method 
@@ -355,17 +185,15 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
       def timeline_find(args = { })
-        add_params = api_method_parameters(__method__)
-        query = { }
-        query = merge_additional_parameters(query, add_params, args)
-        http_get('timeline', query)
+        query = process_method_parameters(__method__, args)
+        http.get('timeline', query)
       end
       alias :timelines :timeline_find
       alias :timeline_search :timeline_find
       API_METHOD_PARAMETERS[:timeline_find] = [
-          { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
-          { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
-          :search,
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+        :search,
       ]
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Detail
@@ -374,7 +202,7 @@ module LevelsBeyond
           timeline_id = process_parameters([ { :name => :timeline_id, :required => true } ], timeline_id)[:timeline_id]
         end
 
-        http_get("timeline/#{timeline_id}")
+        http.get("timeline/#{timeline_id}")
       end
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Clips
@@ -383,15 +211,13 @@ module LevelsBeyond
           timeline_id = process_parameters([ { :name => :timeline_id, :required => true } ], timeline_id)[:timeline_id]
         end
 
-        http_get("timeline/#{timeline_id}/clips")
+        http.get("timeline/#{timeline_id}/clips")
       end
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
       def clip_find(args = { })
-        add_params = api_method_parameters(__method__)
-        query = { }
-        query = merge_additional_parameters(query, add_params, args)
-        http_get('clip', query)
+        query = process_method_parameters(__method__, args)
+        http.get('clip', query)
       end
       alias :clips :clip_find
       alias :clip_search :clip_find
@@ -431,12 +257,12 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Clip+Detail
       def clip_detail(clip_id)
-        if clip_id.is_a?(Hash)
-          clip_id = process_parameters([ { :name => :clip_id, :required => true } ], clip_id)[:clip_id]
-        end
-
-        http_get("clip/#{clip_id}")
+        clip_id = process_method_parameters(__method__, clip_id)[:clip_id] if clip_id.is_a?(Hash)
+        http.get("clip/#{clip_id}")
       end
+      API_METHOD_PARAMETERS[:clip_detail] = [
+        { :name => :clip_id, :required => true }
+      ]
 
       # The Find Collections method uses a search term to find collections within the Reach Engine Studio.
       # If no search term or other parameters are provided, the response contains up to 50 collections.
@@ -450,11 +276,8 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
       def collection_find(args = { })
-        add_params = api_method_parameters(__method__)
-
-        query = { }
-        query = merge_additional_parameters(query, add_params, args)
-        http_get('collection', query)
+        query = process_method_parameters(__method__, args)
+        http.get('collection', query)
       end
       alias :collections :collection_find
       alias :collection_search :collection_find
@@ -471,12 +294,13 @@ module LevelsBeyond
       # @return [Hash]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
       def collection_detail(collection_id)
-        if collection_id.is_a?(Hash)
-          collection_id = process_parameters([ { :name => :collection_id, :required => true } ], collection_id)[:collection_id]
-        end
-
-        http_get("collection/#{collection_id}")
+        collection_id = process_method_parameters(__method__, collection_id)[:collection_id] if collection_id.is_a?(Hash)
+        http.get("collection/#{collection_id}")
       end
+      API_METHOD_PARAMETERS[:collection_detail] = [
+        { :name => :collection_id, :required => true },
+      ]
+
 
       # Creates a new collection, ready for member insertion, using the collection name provided in the request. After
       # a new collection is created, use the Add Collection Member methods to add member items.
@@ -487,10 +311,18 @@ module LevelsBeyond
       # @param [String] name The name of the Collection to be created.
       # @param [Hash] metadata A hash with metadata key/value pairs for this collection.
       def collection_create(name, metadata = { })
-        data = { :name => name }
-        data[:metadata] = metadata if metadata.respond_to?(:empty?) and !metadata.empty?
-        http_post_json('collection', data)
+        if name.is_a?(Hash)
+          data = process_method_parameters(__method__, name)
+        else
+          data = { :name => name }
+          data[:metadata] = metadata if metadata.respond_to?(:empty?) and !metadata.empty?
+        end
+        http.post_json('collection', data)
       end
+      API_METHOD_PARAMETERS[:collection_detail] = [
+        { :name => :collection_id, :required => true },
+        { :name => :metadata }
+      ]
 
       # The Collection Member Add method sends a collection ID and specifies the asset type and ID to add to the
       # collection. IDs are automatically created when a video is uploaded. Only one collection member can be
@@ -509,9 +341,8 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
       def collection_member_add(collection_id, member_class = nil, member_id = nil)
         if collection_id.is_a?(Hash)
-          parameters = api_method_parameters(__method__)
-          data = process_parameters(parameters, collection_id)
-          collection_id = data[:collection_id]
+          data = process_method_parameters(__method__, collection_id)
+          collection_id = data.delete(:collection_id)
         else
           data = {
             :class => member_class,
@@ -519,7 +350,7 @@ module LevelsBeyond
           }
         end
 
-        http_post_json("collection/#{collection_id}/members", data)
+        http.post_json("collection/#{collection_id}/members", data)
       end
       API_METHOD_PARAMETERS[:collection_member_add] = [
         { :name => :collection_id,  :required => true },
@@ -541,14 +372,13 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
       def collection_member_remove(collection_id, member_class = nil, member_id = nil)
         if collection_id.is_a?(Hash)
-          parameters = api_method_parameters(__method__)
-          data = process_parameters(parameters, collection_id)
+          data = process_method_parameters(__method__, collection_id)
           collection_id = data[:collection_id]
           member_class = data[:member_class]
           member_id = data[:member_id]
         end
 
-        http_delete("collection/#{collection_id}/members/#{member_class}/#{member_id}")
+        http.delete("collection/#{collection_id}/members/#{member_class}/#{member_id}")
       end
       API_METHOD_PARAMETERS[:collection_member_remove] = [
         { :name => :collection_id,  :required => true },
@@ -565,22 +395,26 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collection+Members
       def collection_member_find(collection_id)
         if collection_id.is_a?(Hash)
-          collection_id = process_parameters([ { :name => :collection_id, :required => true } ], collection_id)[:collection_id]
+          collection_id = process_method_parameters(__method__, collection_id)[:collection_id]
         end
 
-        http_get("collection/#{collection_id}/members")
+        http.get("collection/#{collection_id}/members")
       end
       alias :collection_members :collection_member_find
       alias :collection_member_search :collection_member_find
+      API_METHOD_PARAMETERS[:collection_member_find] = [
+        { :name => :collection_id,  :required => true },
+      ]
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Query+Workflows
       def workflow_query(args = { })
-        add_params = [ :subject_class ]
-        query = { }
-        query = merge_additional_parameters(query, add_params, args)
-        http_get('workflow', query)
+        query = process_method_parameters(__method__, args)
+        http.get('workflow', query)
       end
       alias :workflows :workflow_query
+      API_METHOD_PARAMETERS[:workflow_query] = [
+        :subject_class,
+      ]
 
       # The Workflow Detail method sends a workflow ID and returns details about the workflow.
       # @param [String] workflow_id
@@ -609,10 +443,13 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Workflow+Detail
       def workflow_detail(workflow_id)
         if workflow_id.is_a?(Hash)
-          workflow_id = process_parameters([ { :name => :workflow_id, :required => true } ], workflow_id)[:workflow_id]
+          workflow_id = process_method_parameters(__method__, workflow_id)[:workflow_id]
         end
-        http_get("workflow/#{workflow_id}")
+        http.get("workflow/#{workflow_id}")
       end
+      API_METHOD_PARAMETERS[:workflow_detail] = [
+        { :name => :workflow_id, :required => true }
+      ]
 
       # @param [String] id One of the following IDs is required in the request:
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
@@ -635,46 +472,59 @@ module LevelsBeyond
       #   }
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Start+Workflow
-      def workflow_execution_start(id, args = { })
-        add_params = [ { :name => :context_data } ]
-        data = { }
-        data = merge_additional_parameters(data, add_params, args)
-        http_post_json("workflow/#{id}/start", data)
+      def workflow_execution_start(subject_id_or_workflow_id, args = { })
+        data = process_method_parameters(__method__, args)
+        http.post_json("workflow/#{subject_id_or_workflow_id}/start", data)
       end
+      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+        { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ],
+          #:required => true
+        },
+        { :name => :context_data }
+      ]
 
-      # @param [String] id One of the following IDs is required in the request:
+      # @param [String] subject_id_or_workflow_id One of the following IDs is required in the request:
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Workflow+Execution+Status
-      def workflow_execution_status(id)
-        http_get("workflow/execution/#{id}")
+      def workflow_execution_status(subject_id_or_workflow_id)
+        http.get("workflow/execution/#{subject_id_or_workflow_id}")
       end
+      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+        { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ], :required => true }
+      ]
 
-      # @param [String] id One of the following IDs is required in the request:
+      # @param [String] subject_id_or_workflow_id One of the following IDs is required in the request:
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Stop+Workflow+Execution
-      def workflow_execution_stop(id)
-        http_post("workflow/#{id}/stop")
+      def workflow_execution_stop(subject_id_or_workflow_id)
+        http.post("workflow/#{subject_id_or_workflow_id}/stop")
       end
+      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+        { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ], :required => true }
+      ]
 
       # @param [String] id One of the following IDs is required in the request:
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Resume+Workflow+Execution
-      def workflow_execution_resume(id)
-        http_post("workflow/#{id}/resume")
+      def workflow_execution_resume(subject_id_or_workflow_id)
+        http.post("workflow/#{subject_id_or_workflow_id}/resume")
       end
+      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+        { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ], :required => true }
+      ]
 
       # The Get Watchfolder method returns a list of watchfolders. The details provided in the response include the
       # watchfolder name, location, whether the watchfolder is enabled or disabled, and poll interval seconds.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Watchfolders
       def watch_folder_find
-        http_get('workflow/watchfolder')
+        http.get('workflow/watchfolder')
       end
       alias :watch_folders :watch_folder_find
       alias :watch_folder_search :watch_folder_find
@@ -700,9 +550,8 @@ module LevelsBeyond
       # workflow, and the value being a valid value for the data def's type
       # (i.e., if type is "Integer" value must be a valid number).
       def watch_folder_create(args = { })
-        parameters = api_method_parameters(__method__)
-        data = process_parameters(parameters, args)
-        return http_post_json('workflow/watchfolder', data)
+        data = process_method_parameters(__method__, args)
+        return http.post_json('workflow/watchfolder', data)
       end
       API_METHOD_PARAMETERS[:watch_folder_create] = [
         { :name => :name,           :required => true },
@@ -727,11 +576,14 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_enable(watch_folder_id)
         if watch_folder_id.is_a?(Hash)
-          watch_folder_id = process_parameters([ { :name => :watch_folder_id, :required => true } ], watch_folder_id)[:watch_folder_id]
+          watch_folder_id = process_method_parameters(__method__, watch_folder_id)[:watch_folder_id]
         end
 
-        http_post("workflow/watchfolder/#{watch_folder_id}/enable")
+        http.post("workflow/watchfolder/#{watch_folder_id}/enable")
       end
+      API_METHOD_PARAMETERS[:watch_folder_enable] = [
+        { :name => :watch_folder_id,   :required => true },
+      ]
 
       # The Disable Watchfolder method disables an enabled watchfolder. When a watchfolder is disabled, it  essentially
       # turns the folder “off” so that it's no longer valid for a workflow. For example, a watchfolder can be disabled
@@ -744,10 +596,13 @@ module LevelsBeyond
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_disable(watch_folder_id)
         if watch_folder_id.is_a?(Hash)
-          watch_folder_id = process_parameters([ { :name => :watch_folder_id, :required => true } ], watch_folder_id)[:watch_folder_id]
+          watch_folder_id = process_method_parameters(__method__, watch_folder_id)[:watch_folder_id]
         end
-        http_post("workflow/watchfolder/#{watch_folder_id}/disable")
+        http.post("workflow/watchfolder/#{watch_folder_id}/disable")
       end
+      API_METHOD_PARAMETERS[:watch_folder_disable] = [
+        { :name => :watch_folder_id,   :required => true },
+      ]
 
       # The Reach Engine Query Language (RQL) can be used by both end users and developers building apps on the Reach
       # Engine Platform. The implementation of RQL is designed to be loosely coupled with the underlying search engine,
@@ -820,7 +675,7 @@ module LevelsBeyond
         query = {}
         query[:types] = [*types].join('|') if types
         query[:rql] = rql if rql
-        http_get('search', query)
+        http.get('search', query)
       end
       API_METHOD_PARAMETERS[:search] = [ :types, :rql ]
 

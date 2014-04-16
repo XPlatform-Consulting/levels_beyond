@@ -1,5 +1,5 @@
-require 'json'
-require 'net/http'
+require 'levels_beyond/reach_engine/http_handler'
+
 module LevelsBeyond
 
   module ReachEngine
@@ -17,6 +17,11 @@ module LevelsBeyond
 
         attr_accessor :cookie
 
+        attr_accessor :response, :parse_response, :error
+        attr_accessor :logger, :api_key, :server_address, :server_port, :http
+
+        attr_accessor :base_path, :base_query
+
         # @param [Hash] args
         # @option args [Logger] :logger
         # @option args [String] :log_to
@@ -27,12 +32,20 @@ module LevelsBeyond
           @logger = args[:logger] ? args[:logger].dup : Logger.new(args[:log_to] || STDOUT)
           logger.level = args[:log_level] if args[:log_level]
 
-          hostname = args[:server_address] || DEFAULT_SERVER_ADDRESS
-          port = args[:server_port] || DEFAULT_SERVER_PORT
-          @http = Net::HTTP.new(hostname, port)
-          @log_request_body = args[:log_request_body]
-          @log_response_body = args[:log_response_body]
-          @log_pretty_print_body = args[:log_pretty_print_body]
+          #hostname = args[:server_address] ||= DEFAULT_SERVER_ADDRESS
+          #port = args[:server_port] ||= DEFAULT_SERVER_PORT
+          args[:server_address] ||= DEFAULT_SERVER_ADDRESS
+          args[:server_port] ||= DEFAULT_SERVER_PORT
+
+          #@http = Net::HTTP.new(hostname, port)
+          @http = ReachEngine::HTTPHandler.new(args)
+
+          @parse_response = args.fetch(:parse_response, true)
+          @api_key = args[:api_key]
+          @base_path = args[:api_base_path] ||= DEFAULT_BASE_PATH
+          #@base_query = { :apiKey => api_key, :fetchIndex => 0, :fetchLimit => 50 }
+          @base_query = { :apiKey => api_key }
+
         end
 
         def http=(new_http)
@@ -40,111 +53,192 @@ module LevelsBeyond
           @http = new_http
         end
 
-        # Formats a HTTPRequest or HTTPResponse body for log output.
-        # @param [HTTPRequest|HTTPResponse] obj
-        # @return [String]
-        def format_body_for_log_output(obj)
-          #obj.body.inspect
-          output = ''
-          if obj.content_type == 'application/json'
-            if @log_pretty_print_body and !obj.body.empty?
-              output << "\n"
-              output << JSON.pretty_generate(JSON.parse(obj.body))
-              return output
-            else
-              return obj.body
-            end
-          else
-            return obj.body.inspect
-          end
-        end # pretty_print_body
-
-        # Performs final processing of a request then executes the request and returns the response.
-        #
-        # Debug output for all requests and responses is also handled by this method.
-        # @param [HTTPRequest] request
-        def process_request(request)
-
-          logger.debug { %(REQUEST: #{request.method} #{to_s}#{request.path} HEADERS: #{request.to_hash.inspect} #{log_request_body and request.request_body_permitted? ? "BODY: #{format_body_for_log_output(request)}" : ''}) }
-          request_time_start = Time.now
-          response = http.request(request)
-          request_time_stop = Time.now
-          request_time_elapsed = request_time_stop - request_time_start
-          logger.debug { %(RESPONDED IN #{request_time_elapsed} seconds. RESPONSE: #{response.inspect} HEADERS: #{response.to_hash.inspect} #{log_response_body and response.respond_to?(:body) ? "BODY: #{format_body_for_log_output(response)}" : ''}) }
-
-          response
-        end # process_request
-
-        # Creates a HTTP DELETE request and passes it to {#process_request} for final processing and execution.
-        # @param [String] path
-        # @param [Hash] headers
-        def delete(path, headers)
-          http_to_s = to_s
-          path = path.sub(http_to_s, '') if path.start_with?(http_to_s)
-          path = "/#{path}" unless path.start_with?('/')
-          request = Net::HTTP::Delete.new(path, headers)
-          process_request(request)
-        end
-
-        # Creates a HTTP GET request and passes it to {#process_request} for final processing and execution.
-        # @param [String] path
-        # @param [Hash] headers
-        def get(path, headers)
-          http_to_s = to_s
-          path = path.sub(http_to_s, '') if path.start_with?(http_to_s)
-          path = "/#{path}" unless path.start_with?('/')
-          request = Net::HTTP::Get.new(path, headers)
-          process_request(request)
-        end
-
-        # Processes put and post request bodies based on the request content type and the format of the data
-        # @param [HTTPRequest] request
-        # @param [Hash|String] data
-        def process_put_and_post_requests(request, data)
-          content_type = request['Content-Type'] ||= 'application/x-www-form-urlencoded'
-          case content_type
-            when 'application/x-www-form-urlencoded'; request.form_data = data
-            when 'application/json'; request.body = (data.is_a?(Hash) or data.is_a?(Array)) ? JSON.generate(data) : data
-            else
-              #data = data.to_s unless request.body.is_a?(String)
-              request.body = data
-          end
-          process_request(request)
-        end
-
-        # Creates a HTTP POST request and passes it on for execution
-        # @param [String] path
-        # @param [String|Hash] data
-        # @param [Hash] headers
-        def post(path, data, headers)
-          path = "/#{path}" unless path.start_with?('/')
-          request = Net::HTTP::Post.new(path, headers)
-          process_put_and_post_requests(request, data)
-        end
-
-        # Creates a HTTP PUT request and passes it on for execution
-        # @param [String] path
-        # @param [String|Hash] data
-        # @param [Hash] headers
-        def put(path, data, headers)
-          path = "/#{path}" unless path.start_with?('/')
-          request = Net::HTTP::Put.new(path, headers)
-          process_put_and_post_requests(request, data)
-        end
-
-        #def post_form_multipart(path, data, headers)
-        #  #headers['Cookie'] = cookie if cookie
-        #  #path = "/#{path}" unless path.start_with?('/')
-        #  #request = Net::HTTP::Post.new(path, headers)
-        #  #request.body = data
-        #  #process_request(request)
-        #end
-
         # Returns the connection information in a URI format.
         # @return [String]
         def to_s
-          @to_s ||= "http#{http.use_ssl? ? 's' : ''}://#{http.address}:#{http.port}"
+          #@to_s ||= "http#{http.use_ssl? ? 's' : ''}://#{http.address}:#{http.port}"
+          @to_s ||= http.to_s
         end
+
+
+        ##############
+
+        def snake_case_to_lower_camel_case(string)
+          string.gsub(/(?:_)(\w)/) { $1.upcase }
+        end
+
+        def hash_to_query(hash)
+          return URI.encode(hash.map{|k,v| "#{snake_case_to_lower_camel_case(k.to_s)}=#{v}"}.join('&'))
+        end
+
+        def process_post_data(data, options = { })
+          recursive = options.fetch(recursive, options.fetch(:process_post_data_recursively, true))
+          case data
+            when Array
+              data.map { |d| process_post_data(d) }
+            when Hash
+              if recursive
+                Hash[ data.map { |k,v| [ snake_case_to_lower_camel_case(k.to_s), process_post_data(v, options) ] } ]
+              else
+                Hash[ data.map { |k,v| [ snake_case_to_lower_camel_case(k.to_s), v ] } ]
+              end
+            else
+              data
+          end
+        end
+
+        def process_path(path, query = { })
+          query = base_query.merge(query)
+          query_str = hash_to_query(query)
+          path = path[1..-1] while path.end_with?('/')
+          path = "#{base_path}#{path}#{query_str and !query_str.empty? ? "?#{query_str}" : ''}"
+          logger.debug { "Processed Path: #{path}"}
+          path
+        end
+
+        # Executes a HTTP DELETE request
+        # @param [String] path
+        # @param [Hash] headers
+        # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
+        # it's content type. If content type is not supported then the response body is returned.
+        #
+        # If parse_response? is false then the response body is returned.
+        def delete(path, query = { }, headers = {})
+          clear_response
+          path = process_path(path, query)
+          @success_code = 204
+          @response = http.delete(path, headers)
+          parse_response? ? parsed_response : response.body
+        end
+
+
+        # Executes a HTTP GET request and returns the response
+        # @param [String] path
+        # @param [Hash] headers
+        # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
+        # it's content type. If content type is not supported then the response body is returned.
+        #
+        # If parse_response? is false then the response body is returned.
+        def get(path, query = { }, headers = { })
+          clear_response
+          path = process_path(path, query)
+          @success_code = 200
+          @response = http.get(path, headers)
+          parse_response? ? parsed_response : response.body
+        end
+
+        # Executes a HTTP POST request
+        # @param [String] path
+        # @param [String] data
+        # @param [Hash] headers
+        # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
+        # it's content type. If content type is not supported then the response body is returned.
+        #
+        # If parse_response? is false then the response body is returned.
+        def post(path, data = { }, query = { }, headers = { })
+          clear_response
+          path = process_path(path, query)
+          @success_code = 201
+          @response = http.post(path, data, headers)
+          parse_response? ? parsed_response : response.body
+        end
+
+        # Formats data as form url encoded and calls {#http_post}
+        # @param [String] path
+        # @param [Hash] data
+        # @param [Hash] headers
+        # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
+        # it's content type. If content type is not supported then the response body is returned.
+        #
+        # If parse_response? is false then the response body is returned.
+        def post_form(path, data = { }, query = { }, headers = { })
+          headers['Content-Type'] = 'application/x-www-form-urlencoded'
+          data = process_post_data(data)
+          #data_as_string = URI.encode_www_form(data)
+          http.post(path, data, query, headers)
+        end
+
+        # Formats data as JSON and calls {#http_put}
+        # @param [String] path
+        # @param [Hash] data
+        # @param [Hash] headers
+        # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
+        # it's content type. If content type is not supported then the response body is returned.
+        #
+        # If parse_response? is false then the response body is returned.
+        def post_json(path, data = { }, query = { }, headers = { })
+          headers['Content-Type'] ||= 'application/json'
+          data = process_post_data(data)
+          data_as_string = JSON.generate(data)
+          post(path, data_as_string, query, headers)
+        end
+
+        #def post_form_multipart(path, data, headers = { })
+        #  headers['Content-Type'] = 'multipart/form-data'
+        #
+        #end # http_post_form_multipart
+
+
+        # Executes a HTTP PUT request
+        # @param [String] path
+        # @param [String] data
+        # @param [Hash] headers
+        # @return [String|Hash] If parse_response? is true then there will be an attempt to parse the response body based on
+        # it's content type. If content type is not support then the respond body is returned.
+        #
+        # If parse_response? is false then the response body is returned.
+        def put(path, data, headers = {})
+          clear_response
+          @success_code = 200
+          @response = http.put(path, data, headers)
+          parse_response? ? parsed_response : response.body
+        end
+
+        # Formats data as JSON and calls {#http_put}
+        def put_json(path, data, headers = { })
+          headers['content-type'] = 'application/json'
+          data = process_post_data(data)
+          data_as_string = JSON.generate(data)
+          put(path, data_as_string, headers)
+        end
+
+
+        # The http response code that indicates success for the request being made.
+        def success_code
+          @success_code
+        end
+
+        # Returns true if the response code equals the success code that was set by the method.
+        def success?
+          return nil unless success_code
+          response.code == success_code.to_s
+        end
+
+        def clear_response
+          @error = { }
+          @success_code = @response = @parsed_response = nil
+        end
+
+        # Returns true if the response body parsing option has been set to true.
+        def parse_response?
+          parse_response
+        end
+
+        # Parses the response body based on the response's content-type header value
+        # @return [nil|String|Hash]
+        #
+        # Will pass through the response body unless the content type is supported.
+        def parsed_response
+          #logger.debug { "Parsing Response: #{response.content_type}" }
+          return response unless response
+          @parsed_response ||= case response.content_type
+                                 when 'application/json'; response.body.empty? ? '' : JSON.parse(response.body)
+                                 when 'text/html'; { } #HTMLResponseParser.parse(response.body)
+                                 else; response.respond_to?(:to_hash) ? response.to_hash : response.to_s
+                               end
+          @parsed_response
+        end # parsed_response
+
 
       end
 
