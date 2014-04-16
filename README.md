@@ -57,12 +57,20 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine --help
 
 ##### Search Assets
+##### Searching against asset using a combination of named parameters
     ./reach_engine asset_search
 
+##### Create Assets
+##### Create an Asset from a mount point accessible to Reach Engine
+    ./reach_engine asset_create
+
+
 ##### Asset Detail
+##### Get the metadata for an Assets
     ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
 
 ##### Search Clips
+
     ./reach_engine clip_search
 
 ##### Clip Detail
@@ -84,6 +92,7 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine collection_member_search 9f7d4d7f-921c-4ab1-88c8-ff95f15d741c
 
 ##### Search
+##### Provides interface to Elastic Search
     ./reach_engine search '{"types":"ImageAssetMaster|Project|Timeline", "rql":"name LIKE \\\\'ubiquity\\\\' SIZE 100 OFFSET 0 ORDER_BY dateUpdated DESC"}'
 
 ##### Timeline Clips
