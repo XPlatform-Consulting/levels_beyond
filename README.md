@@ -44,7 +44,7 @@ Reach Engine API Executable [bin/reach_engine]
         --[no-]log-pretty-print-body Determines if the request and response bodies are pretty printed in the log output.
         --[no-]pretty-print          Determines if the output JSON is pretty printed
         --[no-]options-file [FILENAME]
-                                      default: /Users/xplatformconsulting/development/levels_beyond/bin/reach_engine_options
+                                      default: ~/.options/reach_engine
         --log-to FILENAME            Log file location.
                                       default: STDERR
         --log-level LEVEL            Logging level. Available Options: debug, info, warn, error, fatal
@@ -61,12 +61,14 @@ Reach Engine API Executable [bin/reach_engine]
 
 #####  Asset Detail - Get the metadata for an Assets
     ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
+    ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
 
 ##### Search Clips
     ./reach_engine clip_search
 
 ##### Clip Detail
     ./reach_engine clip_detail 12345678-abc1-4321-a11b-43ac890bd789
+    ./reach_engine clip_detail '{ "clip_id":"12345678-abc1-4321-a11b-43ac890bd789" }'
 
 ##### Collection Search
     ./reach_engine collection_search
@@ -99,10 +101,11 @@ Reach Engine API Executable [bin/reach_engine]
 
 ##### Timeline Detail
     ./reach_engine timeline_detail 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+    ./reach_engine timeline_detail '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
 
 ##### Timeline Search
+    ./reach_engine timeline_search
     ./reach_engine timeline_search '{"search":"Mickey","media":"video"}'
-    ./reach_engine timeline_detail '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
 
 ##### Watch Folder Create
     ./reach_engine watch_folder_create '{"name":"API Watchfolder 23432","watch_folder":"/mnt/MediaSAN/zReachEngineDATA/media/temp/xplatform60/","max_concurrent":3,"delete_on_success":false,"workflow_key":"_ingestAssetToCollection","enabled":true,"file_data_def":"fileToIngest","subject":"[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]","contextData":{}}'
