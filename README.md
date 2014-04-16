@@ -59,7 +59,7 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Search Assets
     ./reach_engine asset_search
 
-##### Asset Detail
+#####  Asset Detail - Get the metadata for an Assets
     ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
 
 ##### Search Clips
@@ -68,6 +68,9 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Clip Detail
     ./reach_engine clip_detail 12345678-abc1-4321-a11b-43ac890bd789
 
+##### Collection Search
+    ./reach_engine collection_search
+    
 ##### Collection Create
     ./reach_engine collection_create "Collection Name" '{"fieldName":"value"}'
 
@@ -87,7 +90,7 @@ Reach Engine API Executable [bin/reach_engine]
     ./reach_engine collection_member_search 9f7d4d7f-921c-4ab1-88c8-ff95f15d741c
     ./reach_engine collection_member_search '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
 
-##### Search
+##### Search - Provides interface to Elastic Search
     ./reach_engine search '{"types":"ImageAssetMaster|Project|Timeline", "rql":"name LIKE \\\\'ubiquity\\\\' SIZE 100 OFFSET 0 ORDER_BY dateUpdated DESC"}'
 
 ##### Timeline Clips
