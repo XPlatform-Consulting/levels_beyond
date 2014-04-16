@@ -313,6 +313,7 @@ module LevelsBeyond
       # on the fifteenth item returned. Used with fetchLimit for pagination controls.
       # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
       # search is limited to 50 results.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
       def asset_find(args = { })
         add_params = api_method_parameters(__method__)
@@ -331,6 +332,7 @@ module LevelsBeyond
       # The Asset Detail method uses an asset ID (that can be found using the Find Assets method) to view asset details
       # such as name, asset type, and media information (e.g., for video, information includes duration,
       # audio language, aspect ratio, and mime type).
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
       def asset_detail(id)
         http_get("asset/#{id}")
@@ -350,6 +352,7 @@ module LevelsBeyond
       # on the fifteenth item returned. Used with fetchLimit for pagination controls.
       # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
       # search is limited to 50 results.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
       def timeline_find(args = { })
         add_params = api_method_parameters(__method__)
@@ -366,13 +369,21 @@ module LevelsBeyond
       ]
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Detail
-      def timeline_detail(id)
-        http_get("timeline/#{id}")
+      def timeline_detail(timeline_id)
+        if timeline_id.is_a?(Hash)
+          timeline_id = process_parameters([ { :name => :timeline_id, :required => true } ], timeline_id)[:timeline_id]
+        end
+
+        http_get("timeline/#{timeline_id}")
       end
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Clips
-      def timeline_clips(id)
-        http_get("timeline/#{id}/clips")
+      def timeline_clips(timeline_id)
+        if timeline_id.is_a?(Hash)
+          timeline_id = process_parameters([ { :name => :timeline_id, :required => true } ], timeline_id)[:timeline_id]
+        end
+
+        http_get("timeline/#{timeline_id}/clips")
       end
 
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
@@ -390,9 +401,41 @@ module LevelsBeyond
         :search,
       ]
 
+      # The Clip Details method is used with a clip ID to view clip details such as duration, start and end offset,
+      # and geographic information. The clip ID can be found using the Find Clips method.
+      #
+      # @param [String] clip_id The UUID (universally unique identifier) of the clip
+      # @return [Hash]
+      # {
+      #     "id": "5A77A9A8-AFCC-6AFF-057F-C9BBFFAA4B33",
+      #     "timelineId": "e37e5ad6-0093-4a99-9188-4a652a517f0b",
+      #     "name": "Donald 2",
+      #     "created": "2013-04-02T07:52:53.930+0000",
+      #     "duration": "10",
+      #     "startOffset": "44.228",
+      #     "endOffset": "54.228",
+      #     "metadata": {
+      #         "categories": [
+      #             "Ready For Edit"
+      #         ],
+      #         "status": "Draft",
+      #         "state": "Alabama",
+      #         "country": "USA",
+      #         "city": "Huntsville"
+      #     }
+      # }
+      #
+      # In the Response Sample:
+      #   The metadata fields, including status, are purely for example purposes.
+      #   Categories are a Reach Engine concept used to limit visibility and metadata field applicability.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Clip+Detail
-      def clip_detail(id)
-        http_get("clip/#{id}")
+      def clip_detail(clip_id)
+        if clip_id.is_a?(Hash)
+          clip_id = process_parameters([ { :name => :clip_id, :required => true } ], clip_id)[:clip_id]
+        end
+
+        http_get("clip/#{clip_id}")
       end
 
       # The Find Collections method uses a search term to find collections within the Reach Engine Studio.
@@ -404,6 +447,7 @@ module LevelsBeyond
       # @option args [Integer] :fetch_index
       # @option args [Integer] :fetch_limit
       # @return [Hash]
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
       def collection_find(args = { })
         add_params = api_method_parameters(__method__)
@@ -423,11 +467,15 @@ module LevelsBeyond
       # Collection Details uses a collection ID (found using the Find Collections method) to view details about
       # specific collection. Details returned in the response include geographic information as well as review comments.
       #
-      # @param [String] id The UUID (universally unique identifier) of the collection
+      # @param [String] collection_id The UUID (universally unique identifier) of the collection
       # @return [Hash]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
-      def collection_detail(id)
-        http_get("collection/#{id}")
+      def collection_detail(collection_id)
+        if collection_id.is_a?(Hash)
+          collection_id = process_parameters([ { :name => :collection_id, :required => true } ], collection_id)[:collection_id]
+        end
+
+        http_get("collection/#{collection_id}")
       end
 
       # Creates a new collection, ready for member insertion, using the collection name provided in the request. After
@@ -459,13 +507,26 @@ module LevelsBeyond
       # @param [String] member_id The UUID (universally unique identifier) of the asset.
       # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
-      def collection_member_add(collection_id, member_class, member_id)
-        data = {
-          :class => member_class,
-          :id => member_id
-        }
+      def collection_member_add(collection_id, member_class = nil, member_id = nil)
+        if collection_id.is_a?(Hash)
+          parameters = api_method_parameters(__method__)
+          data = process_parameters(parameters, collection_id)
+          collection_id = data[:collection_id]
+        else
+          data = {
+            :class => member_class,
+            :id => member_id
+          }
+        end
+
         http_post_json("collection/#{collection_id}/members", data)
       end
+      API_METHOD_PARAMETERS[:collection_member_add] = [
+        { :name => :collection_id,  :required => true },
+        { :name => :member_class,   :required => true },
+        { :name => :member_id,      :required => true },
+      ]
+
 
       # The Collection Member Remove method sends a collection ID and specifies the member class and member ID to
       # remove from the collection. To determine the member class and ID, use the Collection Member method. No more
@@ -478,9 +539,22 @@ module LevelsBeyond
       # member JSON structure from a query result.
       # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
-      def collection_member_remove(collection_id, member_class, member_id)
+      def collection_member_remove(collection_id, member_class = nil, member_id = nil)
+        if collection_id.is_a?(Hash)
+          parameters = api_method_parameters(__method__)
+          data = process_parameters(parameters, collection_id)
+          collection_id = data[:collection_id]
+          member_class = data[:member_class]
+          member_id = data[:member_id]
+        end
+
         http_delete("collection/#{collection_id}/members/#{member_class}/#{member_id}")
       end
+      API_METHOD_PARAMETERS[:collection_member_remove] = [
+        { :name => :collection_id,  :required => true },
+        { :name => :member_class,   :required => true },
+        { :name => :member_id,      :required => true },
+      ]
 
       # A collection member is an asset within a collection. An asset collection contains collection members, and
       # assets can belong to more than one collection. However, it is not possible to nest collections (you cannot have
@@ -490,6 +564,10 @@ module LevelsBeyond
       # @return [Array<Hash>]
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collection+Members
       def collection_member_find(collection_id)
+        if collection_id.is_a?(Hash)
+          collection_id = process_parameters([ { :name => :collection_id, :required => true } ], collection_id)[:collection_id]
+        end
+
         http_get("collection/#{collection_id}/members")
       end
       alias :collection_members :collection_member_find
@@ -504,8 +582,35 @@ module LevelsBeyond
       end
       alias :workflows :workflow_query
 
+      # The Workflow Detail method sends a workflow ID and returns details about the workflow.
+      # @param [String] workflow_id
+      # @return [Hash]
+      # {
+      #   "id": "_archiveCollectionContents",
+      #   "name": "Archive Collection Contents",
+      #   "subjectClass": "AssetCollection",
+      #   "enabled": true,
+      #   "contextDataDefs": [
+      #     {
+      #        "name": "targetFilename",
+      #        "type": "String",
+      #        "required": false,
+      #        "multiple": false
+      #     },
+      #     {
+      #        "name": "targetDirectory",
+      #        "type": "Directory",
+      #        "required": false,
+      #        "multiple": false
+      #     }
+      #   ]
+      # }
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Workflow+Detail
       def workflow_detail(workflow_id)
+        if workflow_id.is_a?(Hash)
+          workflow_id = process_parameters([ { :name => :workflow_id, :required => true } ], workflow_id)[:workflow_id]
+        end
         http_get("workflow/#{workflow_id}")
       end
 
@@ -621,6 +726,10 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_enable(watch_folder_id)
+        if watch_folder_id.is_a?(Hash)
+          watch_folder_id = process_parameters([ { :name => :watch_folder_id, :required => true } ], watch_folder_id)[:watch_folder_id]
+        end
+
         http_post("workflow/watchfolder/#{watch_folder_id}/enable")
       end
 
@@ -634,6 +743,9 @@ module LevelsBeyond
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_disable(watch_folder_id)
+        if watch_folder_id.is_a?(Hash)
+          watch_folder_id = process_parameters([ { :name => :watch_folder_id, :required => true } ], watch_folder_id)[:watch_folder_id]
+        end
         http_post("workflow/watchfolder/#{watch_folder_id}/disable")
       end
 

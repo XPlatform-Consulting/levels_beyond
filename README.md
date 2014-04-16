@@ -73,42 +73,51 @@ Reach Engine API Executable [bin/reach_engine]
 
 ##### Collection Detail
     ./reach_engine collection_detail 12345678-abc1-4321-a11b-43ac890bd789
+    ./reach_engine collection_detail '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
 
 ##### Collection Member Add
     ./reach_engine collection_member_add Cf576b779-07cb-4f52-9e59-695ddbc2eb1d Clip 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+    ./reach_engine collection_member_add '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "member_class":"Clip", "member_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
 
 ##### Collection Member Remove
     ./reach_engine collection_member_remove f576b779-07cb-4f52-9e59-695ddbc2eb1d Clip e8d497db-4f14-483a-ab1b-9db440e2f729
+    ./reach_engine collection_member_remove '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "member_class":"Clip", "member_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
 
 ##### Collection Member Search
     ./reach_engine collection_member_search 9f7d4d7f-921c-4ab1-88c8-ff95f15d741c
+    ./reach_engine collection_member_search '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
 
 ##### Search
     ./reach_engine search '{"types":"ImageAssetMaster|Project|Timeline", "rql":"name LIKE \\\\'ubiquity\\\\' SIZE 100 OFFSET 0 ORDER_BY dateUpdated DESC"}'
 
 ##### Timeline Clips
     ./reach_engine timeline_clips 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
+    ./reach_engine timeline_clips '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
 
 ##### Timeline Detail
     ./reach_engine timeline_detail 5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF
 
 ##### Timeline Search
     ./reach_engine timeline_search '{"search":"Mickey","media":"video"}'
+    ./reach_engine timeline_detail '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
 
 ##### Watch Folder Create
     ./reach_engine watch_folder_create '{"name":"API Watchfolder 23432","watch_folder":"/mnt/MediaSAN/zReachEngineDATA/media/temp/xplatform60/","max_concurrent":3,"delete_on_success":false,"workflow_key":"_ingestAssetToCollection","enabled":true,"file_data_def":"fileToIngest","subject":"[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]","contextData":{}}'
 
 ##### Watch Folder Disable
     ./reach_engine watch_folder_disable 5194576f30045c8f72d99afa
+    ./reach_engine watch_folder_disable '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
 
 ##### Watch Folder Enable
     ./reach_engine watch_folder_enable 5194576f30045c8f72d99afa
+    ./reach_engine watch_folder_enable '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
 
 ##### Watch Folder Search
     ./reach_engine watch_folder_search
 
 ##### Workflow Detail
     ./reach_engine workflow_detail _archiveCollectionContents
+    ./reach_engine workflow_detail '{"workflow_id":"_archiveCollectionContents"}'
 
 ##### Workflow Query
     ./reach_engine workflow_query
@@ -125,17 +134,6 @@ Reach Engine API Executable [bin/reach_engine]
 
 ##### Workflow Stop
     ./reach_engine workflow_execution_stop _archiveCollectionContents
-
-## FUTURE SYNTAX
-    ./reach_engine collection_detail '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
-    ./reach_engine collection_member_add '{"collection_name":"Collection Name", "collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "clip_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
-    ./reach_engine collection_member_remove '{"collection_name":"Collection Name", "collection_id":"12345678-abc1-4321-a11b-43ac890bd789", "clip_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"'
-    ./reach_engine collection_member_search '{"collection_id":"12345678-abc1-4321-a11b-43ac890bd789"}'
-    ./reach_engine timeline_clips '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
-    ./reach_engine timeline_detail '{"timeline_id":"5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"}'
-    ./reach_engine watch_folder_disable  '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
-    ./reach_engine watch_folder_enable  '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
-    ./reach_engine workflow_detail  '{"workflow_id":"5194576f30045c8f72d99afa"}'
 
 ## Contributing
 
