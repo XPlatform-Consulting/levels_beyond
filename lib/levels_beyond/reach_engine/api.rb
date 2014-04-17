@@ -136,6 +136,8 @@ module LevelsBeyond
       # term or other parameters are specified, the response contains up to 50 assets. More assets can be returned with
       # additional Find Assets requests using the FetchIndex parameter.
       #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
+      #
       # @param [Hash] args
       # @option args [String] :search The term to match against. Search terms are sent through a search engine, and
       # search all text in a document. Search supports partial words and similar words, but not wild cards. If no
@@ -145,8 +147,6 @@ module LevelsBeyond
       # on the fifteenth item returned. Used with fetchLimit for pagination controls.
       # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
       # search is limited to 50 results.
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Assets
       def asset_find(args = { })
         query = process_method_parameters(__method__, args)
         http.get('asset', query)
@@ -164,14 +164,113 @@ module LevelsBeyond
       # audio language, aspect ratio, and mime type).
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Asset+Details
-      def asset_detail(id)
-        http.get("asset/#{id}")
+      #
+      # @param [String|Hash] asset_id The id of the asset to get the detail of
+      # @return [Hash]
+      # {
+      #    "id": "417e5893-46d7-457b-b1a1-b5f316d4540e",
+      #    "name": "Mickey is Awesome.mov",
+      #    "contents": [
+      #        {
+      #            "id": "a20933dd-de29-491e-b62d-773a612efaa1",
+      #            "name": "Episode Test 2.mov",
+      #            "contentType": "VIDEO",
+      #            "contentUses": [
+      #                "MEZZANINE",
+      #                "SOURCE"
+      #            ],
+      #            "mediaInfo": {
+      #                "audioCodec": "40",
+      #                "audioChannelCount": "2",
+      #                "width": "1280",
+      #                "aspectRatio": "16:9",
+      #                "dropFrame": false,
+      #                "startTime": "0.0",
+      #                "duration": "140.0",
+      #                "height": "720",
+      #                "audioLanguage": "en",
+      #                "bitrateKbs": "4957892.0",
+      #                "startTimecode": "00:00:00:00",
+      #                "frameRate": "24.0",
+      #                "videoCodec": "avc1",
+      #                "mimeType": "video/quicktime",
+      #                "audioBitrate": "128000"
+      #            }
+      #        },
+      #        {
+      #            "id": "76f4cfa3-a908-4e5b-a357-7408d973b85e",
+      #            "name": "Mickey_is_Awesome.mp4",
+      #            "contentType": "VIDEO",
+      #            "contentUses": [
+      #                "PROXY"
+      #            ],
+      #            "mediaInfo": {
+      #                "audioCodec": "40",
+      #                "audioChannelCount": "2",
+      #                "width": "854",
+      #                "aspectRatio": "16:9",
+      #                "dropFrame": false,
+      #                "startTime": "-0.041999999433755875",
+      #                "duration": "140.00799560546875",
+      #                "height": "480",
+      #                "audioLanguage": "en",
+      #                "bitrateKbs": "996977.0",
+      #                "startTimecode": "00:00:00:-1",
+      #                "frameRate": "24.0",
+      #                "videoCodec": "avc1",
+      #                "mimeType": "video/mp4",
+      #                "audioBitrate": "128054"
+      #            }
+      #        },
+      #        {
+      #            "id": "3b0d85ec-fab1-46b7-900e-f7463b4133bf",
+      #            "name": "Mickey_is_Awesome.mov",
+      #            "contentType": "VIDEO",
+      #            "contentUses": [
+      #                "THUMBNAIL_VIDEO"
+      #            ],
+      #            "mediaInfo": {
+      #                "startTime": "0.0",
+      #                "duration": "140.0",
+      #                "height": "144",
+      #                "startTimecode": "00:00:00:00",
+      #                "bitrateKbs": "83914.0",
+      #                "width": "256",
+      #                "aspectRatio": "16:9",
+      #                "frameRate": "1.0",
+      #                "videoCodec": "jpeg",
+      #                "dropFrame": false,
+      #                "mimeType": "video/quicktime"
+      #            }
+      #        },
+      #        {
+      #            "id": "8ec294e7-cfd2-4941-967a-8efa52fae86c",
+      #            "name": "Mickey_is_Awesome.jpg",
+      #            "contentType": "IMAGE",
+      #            "contentUses": [
+      #                "THUMBNAIL"
+      #            ],
+      #            "mediaInfo": {
+      #                "height": "144",
+      #                "width": "256",
+      #                "mimeType": "image/jpeg"
+      #            }
+      #        }
+      #    ]
+      # }
+      def asset_detail(asset_id)
+        asset_id = process_method_parameters(__method__, asset_id)[:asset_id] if asset_id.is_a?(Hash)
+
+        http.get("asset/#{asset_id}")
       end
+      API_METHOD_PARAMETERS[:asset_detail] = [ { :name => :asset_id, :required => true } ]
 
       # The Find Timelines method uses a search term to find timelines within the Reach Engine Studio. The method 
       # returns a list of timelines that matches the parameters provided, if any. If no search term or other parameters 
       # are specified, the response contains up to 50 timelines. More timelines can be returned with additional Find 
       # Timelines requests using the FetchIndex parameter.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
       #
       # @param [Hash] args
       # @option args [String] :search The term to match against. Search terms are sent through a search engine, and
@@ -182,8 +281,6 @@ module LevelsBeyond
       # on the fifteenth item returned. Used with fetchLimit for pagination controls.
       # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
       # search is limited to 50 results.
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Timelines
       def timeline_find(args = { })
         query = process_method_parameters(__method__, args)
         http.get('timeline', query)
@@ -265,16 +362,17 @@ module LevelsBeyond
       ]
 
       # The Find Collections method uses a search term to find collections within the Reach Engine Studio.
+      #
       # If no search term or other parameters are provided, the response contains up to 50 collections.
       # More collections can be returned with additional Find Collections requests using the Fetch Index parameter.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
       #
       # @param [Hash] args
       # @option args [String] :search
       # @option args [Integer] :fetch_index
       # @option args [Integer] :fetch_limit
       # @return [Hash]
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Collections
       def collection_find(args = { })
         query = process_method_parameters(__method__, args)
         http.get('collection', query)
@@ -290,9 +388,10 @@ module LevelsBeyond
       # Collection Details uses a collection ID (found using the Find Collections method) to view details about
       # specific collection. Details returned in the response include geographic information as well as review comments.
       #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
+      #
       # @param [String] collection_id The UUID (universally unique identifier) of the collection
       # @return [Hash]
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Collection+Detail
       def collection_detail(collection_id)
         collection_id = process_method_parameters(__method__, collection_id)[:collection_id] if collection_id.is_a?(Hash)
         http.get("collection/#{collection_id}")
@@ -332,13 +431,14 @@ module LevelsBeyond
       # the user when the clip was created) and clip ID. The response displays all associated members in the response;
       # therefore, if collection members have been added during a prior request, the existing collection members, in
       # addition to the newly added collection member, will all display in the response.
-      #                                                                                                                                                                                                                                                                                                                                                                                                                    #
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member                                                                                                                                                                                                                                                                                                                                                                                                                   #
+      #
       # @param [String] collection_id The Collection UUID (universally unique identifier).
       # @param [String] member_class The type of the asset to be added to the Collection.
       #                              Valid values include "AssetMaster", "Timeline", and "Clip".
       # @param [String] member_id The UUID (universally unique identifier) of the asset.
       # @return [Array<Hash>]
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Add+Collection+Member
       def collection_member_add(collection_id, member_class = nil, member_id = nil)
         if collection_id.is_a?(Hash)
           data = process_method_parameters(__method__, collection_id)
@@ -363,13 +463,14 @@ module LevelsBeyond
       # remove from the collection. To determine the member class and ID, use the Collection Member method. No more
       # than one member can be removed in a single request.
       #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
+      #
       # @param [String] collection_id The Collection UUID (universally unique identifier).
       # @param [String] member_class The class of the member to remove. This value should match the "class" property in
       # the member JSON structure from a query result.
       # @param [String] member_id The UUID of the member to remove. This value should match the "id" property in the
       # member JSON structure from a query result.
       # @return [Array<Hash>]
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Remove+Collection+Member
       def collection_member_remove(collection_id, member_class = nil, member_id = nil)
         if collection_id.is_a?(Hash)
           data = process_method_parameters(__method__, collection_id)
@@ -406,17 +507,74 @@ module LevelsBeyond
         { :name => :collection_id,  :required => true },
       ]
 
+      # The Query Workflows method returns a list of workflows.
+      #
+      # You can optionally narrow results by specifying the class type against which the workflow operates.
+      # If no subject class or other parameters are specified, the response contains up to 50 workflows. More workflows
+      # can be returned with additional Query Workflows requests using the fetchIndex parameter.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Query+Workflows
+      #
+      # @param [Hash] args
+      # @option args [String] :subject_class The type of Reach Engine entity that this workflow operates against.
+      # Valid values include Asset, Timeline, Clip, Project, and AssetCollection.
+      # @option args [Integer] :fetch_index Defines the start index of the results. E.g., "15" would start the results
+      # on the fifteenth item returned. Used with fetchLimit for pagination controls.
+      # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
+      # search is limited to 50 results.
+      # @return [Hash]
+      #   {
+      #      "fetchIndex": "0",
+      #      "totalResultCount": "5",
+      #      "thisResultCount": "5",
+      #      "results": [
+      #          {
+      #              "id": "_ingestAssetToCollection",
+      #              "name": "Ingest Asset to Collection",
+      #              "subjectClass": "AssetCollection",
+      #              "enabled": true
+      #          },
+      #          {
+      #              "id": "_exportCollectionToNLE",
+      #              "name": "Export Collection to NLE",
+      #              "subjectClass": "AssetCollection",
+      #              "enabled": true
+      #          },
+      #          {
+      #              "id": "_exportBinProxiesToNLE",
+      #              "name": "Export Collection to NLE",
+      #              "subjectClass": "AssetCollection",
+      #              "enabled": true
+      #          },
+      #          {
+      #              "id": "_enableCollectionWatchFolder",
+      #              "name": "Enable Collection Watch Folder",
+      #              "subjectClass": "AssetCollection",
+      #              "enabled": true
+      #          },
+      #          {
+      #              "id": "_archiveCollectionContents",
+      #              "name": "Archive Collection Contents",
+      #              "subjectClass": "AssetCollection",
+      #              "enabled": true
+      #          }
+      #      ]
+      #   }
       def workflow_query(args = { })
         query = process_method_parameters(__method__, args)
         http.get('workflow', query)
       end
       alias :workflows :workflow_query
       API_METHOD_PARAMETERS[:workflow_query] = [
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
         :subject_class,
       ]
 
       # The Workflow Detail method sends a workflow ID and returns details about the workflow.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Workflow+Detail
+      #
       # @param [String] workflow_id
       # @return [Hash]
       # {
@@ -439,8 +597,6 @@ module LevelsBeyond
       #     }
       #   ]
       # }
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Workflow+Detail
       def workflow_detail(workflow_id)
         if workflow_id.is_a?(Hash)
           workflow_id = process_method_parameters(__method__, workflow_id)[:workflow_id]

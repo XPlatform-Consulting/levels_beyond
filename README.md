@@ -19,17 +19,6 @@ Or install it yourself as:
 Reach Engine API Executable [bin/reach_engine]
 ---------------------------
 
-##### DEFAULT OPTIONS FILE PATH
-  ~/.options/reach_engine
-
-##### Example Options File Contents:
-    --reach-engine-server-address=10.42.1.70
-    --api-key=12345678-abc1-4321-a11b-43ac890bd789
-    --no-log-request-body
-    --log-response-body
-    --log-pretty-print-body
-    --log-level=debug
-
 ## Usage
     Usage: reach_engine [options] [method_name] [method_arguments]
         --reach-engine-server-address SERVERADDRESS
@@ -51,17 +40,33 @@ Reach Engine API Executable [bin/reach_engine]
                                       default: debug
         -h, --help                   Show this message.
 
+#### Options File
+
+##### DEFAULT OPTIONS FILE PATH
+    ~/.options/reach_engine
+
+##### Example Options File Contents:
+    --reach-engine-server-address=10.42.1.70
+    --api-key=12345678-abc1-4321-a11b-43ac890bd789
+    --no-log-request-body
+    --log-response-body
+    --log-pretty-print-body
+    --log-level=debug
+
 #### Examples of Usage:
 
 ##### Accessing help.
     ./reach_engine --help
 
-##### Search Assets
+##### Asset Search
     ./reach_engine asset_search
 
-#####  Asset Detail - Get the metadata for an Assets
+##### Asset Create
+    ./reach_engine asset_create '{"file_to_ingest":"/assets/test.mov"}'
+
+##### Asset Detail - Get the metadata for an Assets
     ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
-    ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
+    ./reach_engine asset_detail '{ "asset_id":"12345678-abc1-4321-a11b-43ac890bd789" }'
 
 ##### Search Clips
     ./reach_engine clip_search
