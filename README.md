@@ -1,7 +1,6 @@
 LevelsBeyond
 ============
 
-
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -45,7 +44,7 @@ Reach Engine API Executable [bin/reach_engine]
 ##### DEFAULT OPTIONS FILE PATH
     ~/.options/reach_engine
 
-##### Example Options File Contents:
+##### Example Options File Contents
     --reach-engine-server-address=10.42.1.70
     --api-key=12345678-abc1-4321-a11b-43ac890bd789
     --no-log-request-body
@@ -53,7 +52,7 @@ Reach Engine API Executable [bin/reach_engine]
     --log-pretty-print-body
     --log-level=debug
 
-#### Examples of Usage:
+#### Examples of Usage
 
 ##### Accessing help.
     ./reach_engine --help
@@ -145,6 +144,17 @@ Reach Engine API Executable [bin/reach_engine]
 
 ##### Workflow Stop
     ./reach_engine workflow_execution_stop _archiveCollectionContents
+
+Future Development
+------------------
+
+  Creation of a utility application that will creates a random number of watch folders, that will create a collection
+  for each watch folder, that will copy a random number of files into each of those watch folder so that we can
+  simulate the true maximum performance load in terms of what Reach Engine can handle.
+
+  Creation of a command that will allow to create a watch folder by path and by specifying the Collection Name as a
+  command line argument instead of requiring the user to specific the Collection ID and Elastic Search record id
+  e.g. "[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]"
 
 ## Contributing
 
