@@ -59,7 +59,7 @@ module LevelsBeyond
             if method_name
               if method_name == 'methods'
                 methods = api.methods; methods -= Object.methods; methods.sort.each { |method| puts "#{method} #{api.method(method).parameters}" }
-                exit
+                return
               end
               response = send(method_name, args[:method_arguments], args)
               output_response(response,args)
@@ -82,6 +82,13 @@ module LevelsBeyond
             end
           end
 
+          def parse_method_arguments(method_arguments)
+            return method_arguments.map { |argument| parse_method_arguments(argument) } if method_arguments.is_a?(Array)
+            return method_arguments unless method_arguments.is_a?(String)
+            return method_arguments unless method_arguments.start_with?('{', '[')
+            JSON.parse(method_arguments, :symbolize_names => true)
+          end
+
           def send(method_name, method_arguments, options = {})
             method_name = method_name.to_sym
             parse_method_arguments = options.fetch(parse_method_arguments, true)
@@ -91,9 +98,9 @@ module LevelsBeyond
 
             if method_arguments
               if method_arguments.is_a?(Array)
-                send_arguments = send_arguments + ( parse_method_arguments ? method_arguments.map { |v| v.is_a?(String) and v.start_with?('{', '[') ? JSON.parse(v) : v } : method_arguments )
+                send_arguments = send_arguments + ( parse_method_arguments ? parse_method_arguments(method_arguments) : method_arguments )
               else
-                method_arguments = JSON.parse(method_arguments) if method_arguments.is_a?(String) and method_arguments.start_with?('{', '[')
+                method_arguments = parse_method_arguments(method_arguments)
                 send_arguments << method_arguments
               end
             end
