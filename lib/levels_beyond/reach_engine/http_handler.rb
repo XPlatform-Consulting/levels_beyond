@@ -13,7 +13,7 @@ module LevelsBeyond
 
       attr_accessor :logger, :log_request_body, :log_response_body, :log_pretty_print_body
 
-      attr_reader :http
+      attr_reader :http, :request, :response
 
       attr_accessor :cookie
 
@@ -64,10 +64,12 @@ module LevelsBeyond
       # Debug output for all requests and responses is also handled by this method.
       # @param [HTTPRequest] request
       def process_request(request)
-
         logger.debug { %(REQUEST: #{request.method} #{to_s}#{request.path} HEADERS: #{request.to_hash.inspect} #{log_request_body and request.request_body_permitted? ? "BODY: #{format_body_for_log_output(request)}" : ''}) }
+
+        @request = request
+
         request_time_start = Time.now
-        response = http.request(request)
+        @response = http.request(request)
         request_time_stop = Time.now
         request_time_elapsed = request_time_stop - request_time_start
         logger.debug { %(RESPONDED IN #{request_time_elapsed} seconds. RESPONSE: #{response.inspect} HEADERS: #{response.to_hash.inspect} #{log_response_body and response.respond_to?(:body) ? "BODY: #{format_body_for_log_output(response)}" : ''}) }
