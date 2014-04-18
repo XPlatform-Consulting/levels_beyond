@@ -114,6 +114,9 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Watch Folder Create
     ./reach_engine watch_folder_create '{"name":"API Watchfolder 23432","watch_folder":"/mnt/MediaSAN/zReachEngineDATA/media/temp/xplatform60/","max_concurrent":3,"delete_on_success":false,"workflow_key":"_ingestAssetToCollection","enabled":true,"file_data_def":"fileToIngest","subject":"[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]","contextData":{}}'
 
+##### Watch Folder Create and Ingest Assets into Collection
+    ./reach_engine create_watch_folder_and_ingest_assets_into_collection '{"name":"API Watchfolder 23432","watch_folder":"/mnt/MediaSAN/zReachEngineDATA/media/temp/xplatform60/","subject":"[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]"}'
+
 ##### Watch Folder Disable
     ./reach_engine watch_folder_disable 5194576f30045c8f72d99afa
     ./reach_engine watch_folder_disable '{"watch_folder_id":"5194576f30045c8f72d99afa"}'
