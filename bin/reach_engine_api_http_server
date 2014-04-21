@@ -1,0 +1,48 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+if %w(start stop restart reload run zap status).include?((command = ARGV.first) ? command.downcase : command)
+  require 'daemons'
+  Daemons.run($0)
+  exit
+end
+
+begin
+  require 'levels_beyond/cli'
+  require 'levels_beyond/reach_engine/api/http_server'
+rescue LoadError => e
+  lib_path = File.expand_path('../../lib', __FILE__)
+  unless $:.include?(lib_path)
+    $:.unshift(lib_path)
+    #warn("Retrying to load AdobeAnywhere after adding #{lib_path} to $LOAD_PATH. The GEM may not be installed correctly.")
+    retry
+  end
+  abort("Failed to load the Levels Beyond Reach Engine gem. '#{e.message}'")
+end
+
+options[:bind] = '0.0.0.0'
+options[:port] = '4567'
+options[:reach_engine_default_server_address] = 'localhost'
+options[:reach_engine_default_server_port] = '8080'
+options[:reach_engine_default_api_key] = nil
+options[:log_level] = Logger::INFO
+
+op = common_option_parser.new
+op.on('--binding BINDING', 'The address to bind the server to.', "\tdefault: #{options[:bind]}") { |v| options[:bind] = v }
+op.on('--port PORT', 'The port that the server should listen on.', "\tdefault: #{options[:port]}") { |v| options[:port] = v }
+op.on('--reach-engine-server-address ADDRESS', 'The IP or hostname to use to contact the Reach Engine Server when one is not specified in incoming request arguments.') { |v| options[:reach_engine_default_server_address] = v }
+op.on('--reach-engine-server-port PORT', 'The port to use to contact the Reach Engine Server when one is not specified in incoming request arguments.') { |v| options[:reach_engine_default_server_port] = v }
+op.on('--reach-engine-api-key API', 'The api-key to use when communicating with the Reach Engine Server when one is not specified in the incoming request arguments.') { |v| options[:reach_engine_default_api_key] = v }
+add_common_options
+op.parse_common
+
+options[:logger] = Logger.new(options[:log_to] || STDERR)
+options[:logger].level = options[:log_level]
+
+begin
+  app = LevelsBeyond::ReachEngine::API::HTTPServer
+  app.init(options)
+  app.logger.debug { "Initialized Reach Engine API HTTP Server on #{app.bind}:#{app.port}." }
+  app.run!
+rescue ArgumentError => e
+  abort(e.message)
+end

@@ -148,6 +148,40 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Workflow Stop
     ./reach_engine workflow_execution_stop _archiveCollectionContents
 
+Reach Engine API HTTP Server Executable [bin/reach_engine_api_http_server]
+---------------------------------------
+
+## Usage
+
+    Usage: reach_engine_api_http_server [options]
+            --binding BINDING            The address to bind the server to.
+                                          default: 0.0.0.0
+            --port PORT                  The port that the server should listen on.
+                                          default: 4567
+            --reach-engine-server-address ADDRESS
+                                         The IP or hostname to use to contact the Reach Engine Server when one is not specified in incoming request arguments.
+            --reach-engine-server-port PORT
+                                         The port to use to contact the Reach Engine Server when one is not specified in incoming request arguments.
+            --reach-engine-api-key API   The api-key to use when communicating with the Reach Engine Server when one is not specified in the incoming request arguments.
+            --[no-]options-file [FILENAME]
+                                          default: ~/.options/reach_engine_api_http_server
+            --log-to FILENAME            Log file location.
+                                          default: STDERR
+            --log-level LEVEL            Logging level. Available Options: fatal, warn, info, error, debug
+                                          default: info
+        -h, --help                       Show this message.
+
+#### Options File
+
+##### DEFAULT OPTIONS FILE PATH
+    ~/.options/reach_engine_api_http_server
+
+##### Example Options File Contents
+    --reach-engine-server-address=10.42.1.70
+    --api-key=12345678-abc1-4321-a11b-43ac890bd789
+    --log-level=debug
+
+
 Future Development
 ------------------
 
@@ -159,6 +193,9 @@ Future Development
   command line argument instead of requiring the user to specific the Collection ID and Elastic Search record id
   e.g. "[AssetCollection.70D1FD32-25FD-3716-C99A-52479EBA03CD.280]"
 
+
+
+
 ## Contributing
 
 1. Fork it ( https://github.com/XPlatform-Consulting/levels_beyond/fork )
@@ -167,4 +204,7 @@ Future Development
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+Library Documentation
+---------------------
+  http://rubydoc.info/github/XPlatform-Consulting/levels_beyond
 
