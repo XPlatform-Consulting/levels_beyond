@@ -181,6 +181,52 @@ Reach Engine API HTTP Server Executable [bin/reach_engine_api_http_server]
     --api-key=12345678-abc1-4321-a11b-43ac890bd789
     --log-level=debug
 
+Reach Engine Watch Folder Generator [bin/reach_engine_watch_folder_generator]
+-----------------------------------
+
+  This utility generates files system folders and seeds them with files and then creates the watch folder in Reach
+  Engine.
+
+## Usage
+    Usage: reach_engine_watch_folder_generator [options]
+            --reach-engine-api-server-address SERVERADDRESS
+                                         The address of the Reach Engine API server.
+            --reach-engine-api-key APIKEY
+                                         The API Key to use when communicating with the Reach Engine API server.
+            --seed-file-path PATH        The path of the seed file.
+            --watch-folder-root-directory-path PATH
+                                         The path to the directory to create the watch folders in.
+            --[no-]watch-folder-subject SUBJECT
+                                         The subject to use when creating the watch folder.
+                                         ex: "[AssetCollection.819FB58F-D007-09E7-F8B2-89FA1A2C4C27.200]"
+            --number-of-watch-folders-to-create NUMBER
+                                         The number of watch folders to create.
+                                          default: 1
+            --number-of-files-to-create NUMBER
+                                         The number of seed files to copy into each newly created watch folder.
+                                          default: 1
+            --[no-]options-file [FILENAME]
+                                          default: ~/.options/reach_engine_watch_folder_generator
+            --log-to FILENAME            Log file location.
+                                          default: STDERR
+            --log-level LEVEL            Logging level. Available Options: error, fatal, info, warn, debug
+                                          default: debug
+        -h, --help                       Show this message.
+
+#### Options File
+
+##### DEFAULT OPTIONS FILE PATH
+    ~/.options/reach_engine_watch_folder_generator
+
+##### Example Options File Contents
+    --reach-engine-api-server-address=10.42.1.70
+    --reach_engine-api-key=12345678-abc1-4321-a11b-43ac890bd789
+    --seed-file-path=/assets/test.mov
+    --watch-folder-root-directory-path=/test/watch_folders
+    --number-of-watch-folders-to-create=10
+    --number-of-files-to-create=10
+    --log-level=debug
+
 
 Future Development
 ------------------

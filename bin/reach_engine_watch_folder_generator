@@ -1,0 +1,42 @@
+#!/usr/bin/env ruby
+require 'rubygems'
+lib_path = File.expand_path('../../lib', __FILE__)
+$:.unshift lib_path unless $:.include?(lib_path)
+
+require 'levels_beyond/cli'
+require 'levels_beyond/reach_engine/api/utilities'
+
+op = common_option_parser
+op.on('--reach-engine-api-server-address SERVERADDRESS', 'The address of the Reach Engine API server.') { |v| options[:server_address] = v }
+op.on('--reach-engine-api-key APIKEY', 'The API Key to use when communicating with the Reach Engine API server.') { |v| options[:api_key] = v }
+op.on('--seed-file-path PATH', 'The path of the seed file.') { |v| options[:seed_file_path] = v }
+op.on('--watch-folder-root-directory-path PATH', 'The path to the directory to create the watch folders in.') { |v| options[:watch_folder_root_path] = v }
+op.on('--[no-]watch-folder-subject SUBJECT', 'The subject to use when creating the watch folder.', 'ex: "[AssetCollection.819FB58F-D007-09E7-F8B2-89FA1A2C4C27.200]"') { |v| options[:watch_folder_subject] = v }
+op.on('--number-of-watch-folders-to-create NUMBER', Integer, 'The number of watch folders to create.', "\tdefault: 1") { |v| options[:number_of_watch_folders_to_create] = v }
+op.on('--number-of-files-to-create NUMBER', Integer, 'The number of seed files to copy into each newly created watch folder.', "\tdefault: 1") { |v| options[:number_of_files_to_generate] = v }
+add_common_options
+op.parse_common
+
+op.add_required_arguments [ { :api_key => 'reach-engine-api-key' }, :seed_file_path, { :watch_folder_root_path => 'watch-folder-root-directory-path' } ]
+op.check_required_arguments
+
+wfg = WatchFolderGenerator.new(options)
+wfg.run
+
+
+# if $0 == __FILE__
+#   args = {
+#       :server_address => server_address,
+#       :api_key => api_key,
+#
+#       :seed_file_path => '/assets/test.mov',
+#       :watch_folder_root_path => '/test',
+#       :watch_folder_subject => '[AssetCollection.819FB58F-D007-09E7-F8B2-89FA1A2C4C27.200]',
+#       :number_of_watch_folders_to_create => 10,
+#       :number_of_files_to_generate => 10,
+#   }
+#
+#   wfg = WatchFolderGenerator.new(args)
+#   wfg.run
+#
+# end
