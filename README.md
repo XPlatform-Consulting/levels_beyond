@@ -63,6 +63,9 @@ Reach Engine API Executable [bin/reach_engine]
 ##### Asset Create
     ./reach_engine asset_create '{"file_to_ingest":"/assets/test.mov"}'
 
+##### Asset Create by Folder
+    ./reach_engine folder_asset_create '{"folder_to_ingest":"/assets/"}'
+
 ##### Asset Detail - Get the metadata for an Assets
     ./reach_engine asset_detail 12345678-abc1-4321-a11b-43ac890bd789
     ./reach_engine asset_detail '{ "asset_id":"12345678-abc1-4321-a11b-43ac890bd789" }'
