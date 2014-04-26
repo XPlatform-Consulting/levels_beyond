@@ -82,8 +82,15 @@ module LevelsBeyond
 
           file_paths = Dir.glob(folder_to_ingest)
 
-          file_paths.map { |file_path| asset_ingest_any(_args.merge(:file_to_ingest => file_path) ) }
+          file_paths.map { |file_path| asset_ingest_any( _args.merge( :file_to_ingest => file_path ) ) }
         end
+        API_METHOD_PARAMETERS[:folder_asset_ingest] = [
+          { :name => :folder_to_ingest, :required => true },
+          :workflow_id,
+          :workflow_name,
+          :context_data
+        ]
+
         alias :folder_asset_create :folder_asset_ingest
 
         alias :search_asset :search
