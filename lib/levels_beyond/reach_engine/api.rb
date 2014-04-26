@@ -11,35 +11,24 @@ module LevelsBeyond
 
     class API
 
-      attr_accessor :response, :parse_response, :error
-      attr_accessor :logger, :api_key, :server_address, :server_port, :http
+      attr_accessor :logger, :http
 
-      attr_accessor :base_path, :base_query
+      DEFAULT_BASE_PATH = '/reachengine/api/v1/'
 
       DEFAULT_FETCH_INDEX = 0
       DEFAULT_FETCH_LIMIT = 50
 
-      DEFAULT_SERVER_ADDRESS = 'localhost'
       DEFAULT_SERVER_PORT = 8080
-      DEFAULT_BASE_PATH = '/reachengine/api/v1/'
 
       API_METHOD_PARAMETERS = { }
 
       def initialize(args = { })
         initialize_logger(args)
 
-        @server_address = args[:server_address] || DEFAULT_SERVER_ADDRESS
-        @server_port = args[:server_port] || DEFAULT_SERVER_PORT
-        @api_key = args[:api_key]
+        args[:server_port] ||= DEFAULT_SERVER_PORT
+        args[:api_base_path] ||= DEFAULT_BASE_PATH
 
-
-        @base_path = args[:api_base_path] ||= DEFAULT_BASE_PATH
-        #@base_query = { :apiKey => api_key, :fetchIndex => 0, :fetchLimit => 50 }
-        @base_query = { :apiKey => api_key }
-
-        @parse_response = args.fetch(:parse_response, true)
         initialize_http_handler(args)
-
       end
 
       def initialize_logger(args = { })
@@ -101,10 +90,10 @@ module LevelsBeyond
           parameter_names << parameter_name
         end
 
-        logger.debug { "Processing Parameters: #{parameter_names.inspect}" }
+        logger.debug { "Processing Parameter(s): #{parameter_names.inspect}" }
         arguments_out = defaults.merge(filter_arguments(arguments, parameter_names, options))
         missing_required_parameters = required_parameters.keys - arguments_out.keys
-        raise ArgumentError, "Missing Required Parameters: #{missing_required_parameters.join(', ')}" unless missing_required_parameters.empty?
+        raise ArgumentError, "Missing Required Parameter(s): #{missing_required_parameters.join(', ')}" unless missing_required_parameters.empty?
         return arguments_out
       end
 
@@ -149,7 +138,8 @@ module LevelsBeyond
       # search is limited to 50 results.
       def asset_find(args = { })
         query = process_method_parameters(__method__, args)
-        http.get('asset', query)
+        #http.get('asset', query)
+        http.get_paginated('asset', query)
       end
       alias :assets :asset_find
       alias :asset_search :asset_find
@@ -302,7 +292,31 @@ module LevelsBeyond
         http.get("timeline/#{timeline_id}")
       end
 
+      # The Timeline Clips returns information about clips associated with that timeline ID, if any are present.
+      #
+      # If the Timeline Detail method request included whether the timeline had a clip (via the timeline resource in
+      # the response), you can use the Timeline Clips method.
+      #
+      # The response contains information about the timeline clip, including the clip ID, duration, creation date, and
+      # start and end offset.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Timeline+Clips
+      #
+      # @return [<Hash>]
+      # [
+      #     {
+      #         "id": "5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF",
+      #         "timelineId": "1021",
+      #         "name": "cool clip",
+      #         "created": "2013-04-05T20:40:30.566+0000",
+      #         "duration": "10",
+      #         "startOffset": "14.019",
+      #         "endOffset": "24.019",
+      #         "metadata": {
+      #         "categories": [],
+      #         }
+      #     }
+      # ]
       def timeline_clips(timeline_id)
         if timeline_id.is_a?(Hash)
           timeline_id = process_parameters([ { :name => :timeline_id, :required => true } ], timeline_id)[:timeline_id]
@@ -311,7 +325,49 @@ module LevelsBeyond
         http.get("timeline/#{timeline_id}/clips")
       end
 
+      # The Find Clips method uses a search term, as well as optional parameters, to find clips within the Reach Engine
+      # Studio.
+      #
+      # The method returns a list of clips that matches the search term or parameters provided in the request. If no
+      # search term is sent in the request, the response will contain all clips within the Reach Engine Studio up to
+      # the default limit of 50 results.
+      #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Find+Clips
+      #
+      # @param [Hash] args
+      # @option args [String] :search The term to match against.  Search terms are sent through a search engine, and
+      # search all text in a document. Search supports partial words and similar words, but not wild cards. If no
+      # parameter is offered, all assets are returned up to the default limit of 50.
+      # @option args [Integer] :fetch_index Defines the start index of the results. E.g., "15" would start the results
+      # on the fifteenth item returned. Used with fetchLimit for pagination controls.
+      # @option args [Integer] :fetch_limit Defines the maximum number of results to return per page. If omitted, the
+      # search is limited to 50 results.
+      # @return [Hash]
+      # {
+      #    "fetchIndex": "0",
+      #    "totalResultCount": "2",
+      #    "thisResultCount": "2",
+      #    "results": [
+      #        {
+      #            "id": "5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF",
+      #            "timelineId": "9db86751-f9ae-4263-a84b-3cc89c795281",
+      #            "name": "Donald 1",
+      #            "created": "2013-04-05T20:40:30.566+0000",
+      #            "duration": "10",
+      #            "startOffset": "14.019",
+      #            "endOffset": "24.019"
+      #        },
+      #        {
+      #            "id": "5A77A9A8-AFCC-6AFF-057F-C9BBFFAA4B33",
+      #            "timelineId": "e37e5ad6-0093-4a99-9188-4a652a517f0b",
+      #            "name": "Donald 2",
+      #            "created": "2013-04-02T07:52:53.930+0000",
+      #            "duration": "10",
+      #            "startOffset": "44.228",
+      #            "endOffset": "54.228"
+      #        }
+      #    ]
+      # }
       def clip_find(args = { })
         query = process_method_parameters(__method__, args)
         http.get('clip', query)
@@ -407,8 +463,19 @@ module LevelsBeyond
       # Note: For collection naming conventions, spaces and special characters are allowed, as well as duplicate names.
       # What differentiates same-name collections is the meta data (image, timestamp, etc.) and the reference ID.
       #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Collections
+      #
       # @param [String] name The name of the Collection to be created.
       # @param [Hash] metadata A hash with metadata key/value pairs for this collection.
+      # @return [Hash]
+      # {
+      #      "id": "f576b779-07cb-4f52-9e59-695ddbc2eb1d",
+      #      "name": "Disney",
+      #      "metadata": {
+      #         "categories": [],
+      #         "mainCharacter": "Mickey Mouse"
+      #     }
+      # }
       def collection_create(name, metadata = { })
         if name.is_a?(Hash)
           data = process_method_parameters(__method__, name)
@@ -439,6 +506,20 @@ module LevelsBeyond
       #                              Valid values include "AssetMaster", "Timeline", and "Clip".
       # @param [String] member_id The UUID (universally unique identifier) of the asset.
       # @return [Array<Hash>]
+      # [
+      #      {
+      #          "name": "Donald 1",
+      #          "archived": false,
+      #          "class": "Clip",
+      #          "id": "5564AEEE-8433-D9C7-2BA7-DBEDD866B3CF"
+      #      },
+      #      {
+      #          "name": "Test Clip",
+      #          "archived": false,
+      #          "class": "Clip",
+      #          "id": "e8d497db-4f14-483a-ab1b-9db440e2f729"
+      #      }
+      # ]
       def collection_member_add(collection_id, member_class = nil, member_id = nil)
         if collection_id.is_a?(Hash)
           data = process_method_parameters(__method__, collection_id)
@@ -607,7 +688,11 @@ module LevelsBeyond
         { :name => :workflow_id, :required => true }
       ]
 
-      # @param [String] id One of the following IDs is required in the request:
+      # The Start Workflow Execution method begins the workflow identified by the workflow ID sent in the request.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Start+Workflow
+      #
+      # @param [String] subject_id_or_workflow_id One of the following IDs is required in the request:
       #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
       #                      workflowID, which can be found in a Query Workflow response.
       # @param [Hash] args
@@ -626,13 +711,18 @@ module LevelsBeyond
       #       "currentStep": "compress content files",
       #       "currentStepDescription": "compress content files"
       #   }
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Start+Workflow
-      def workflow_execution_start(subject_id_or_workflow_id, args = { })
+      def workflow_start(subject_id_or_workflow_id, args = { })
+        if subject_id_or_workflow_id.is_a?(Hash)
+          args.merge!(subject_id_or_workflow_id)
+          subject_id_or_workflow_id = nil
+        end
         data = process_method_parameters(__method__, args)
+        subject_id_or_workflow_id ||= data.delete(:subject_id_or_workflow_id)
+
         http.post_json("workflow/#{subject_id_or_workflow_id}/start", data)
       end
-      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+      alias :workflow_execution_start :workflow_start
+      API_METHOD_PARAMETERS[:workflow_start] = [
         { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ],
           #:required => true
         },
@@ -644,48 +734,104 @@ module LevelsBeyond
       #                      workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Workflow+Execution+Status
-      def workflow_execution_status(subject_id_or_workflow_id)
-        http.get("workflow/execution/#{subject_id_or_workflow_id}")
+      def workflow_execution_status(subject_id_or_workflow_id, args = { })
+        query = process_method_parameters(__method__, args)
+        http.get("workflow/execution/#{subject_id_or_workflow_id}", query)
       end
       API_METHOD_PARAMETERS[:workflow_execution_status] = [
-        { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ], :required => true }
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+        #{ :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ] }, #, :required => true },
+        :subject_id,
       ]
 
       # @param [String] subject_id_or_workflow_id One of the following IDs is required in the request:
-      #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
-      #                      workflowID, which can be found in a Query Workflow response.
+      #   subjectID, which is the workflow's subject UUID (universally unique identifier), or
+      #   workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Stop+Workflow+Execution
       def workflow_execution_stop(subject_id_or_workflow_id)
         http.post("workflow/#{subject_id_or_workflow_id}/stop")
       end
-      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+      API_METHOD_PARAMETERS[:workflow_execution_stop] = [
         { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ], :required => true }
       ]
 
       # @param [String] id One of the following IDs is required in the request:
-      #                      subjectID, which is the workflow's subject UUID (universally unique identifier), or
-      #                      workflowID, which can be found in a Query Workflow response.
+      #   subjectID, which is the workflow's subject UUID (universally unique identifier), or
+      #   workflowID, which can be found in a Query Workflow response.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Resume+Workflow+Execution
       def workflow_execution_resume(subject_id_or_workflow_id)
         http.post("workflow/#{subject_id_or_workflow_id}/resume")
       end
-      API_METHOD_PARAMETERS[:workflow_execution_status] = [
+      API_METHOD_PARAMETERS[:workflow_execution_resume] = [
         { :name => :subject_id_or_workflow_id, :alias => [ :subject_id, :workflow_id, :id ], :required => true }
       ]
 
-      # The Get Watchfolder method returns a list of watchfolders. The details provided in the response include the
-      # watchfolder name, location, whether the watchfolder is enabled or disabled, and poll interval seconds.
+      # The Get Watchfolder method returns a list of watchfolders.
+      #
+      # The details provided in the response include the watchfolder name, location, whether the watchfolder is
+      # enabled or disabled, and poll interval seconds.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Get+Watchfolders
-      def watch_folder_find
+      #
+      # @return [Hash]
+      # {
+      #     "fetchIndex": "0",
+      #     "totalResultCount": "2",
+      #     "thisResultCount": "2",
+      #     "results": [
+      #         {
+      #             "name": "imageSequence",
+      #             "enabled": true,
+      #             "watchFolder": "/Users/davelamy/Development/hotfolder/imageSequence",
+      #             "maxConcurrent": "1",
+      #             "deleteOnSuccess": false,
+      #             "processFolders": true,
+      #             "pollIntervalSeconds": "5",
+      #             "workflowKey": "_ingestImageSequenceFolder",
+      #             "fileDataDef": "imageSequenceDir",
+      #             "requireFileLock": false,
+      #             "contextData": {
+      #                 "mezzanineTemplate": "FFmpeg-Prores"
+      #             },
+      #             "_id": "517af85f9436565b3964da0d"
+      #         },
+      #         {
+      #             "name": "API Watchfolder",
+      #             "enabled": false,
+      #             "watchFolder": "/Users/davelamy/Development/hotfolder/APITest",
+      #             "maxConcurrent": "3",
+      #             "deleteOnSuccess": false,
+      #             "processFolders": false,
+      #             "pollIntervalSeconds": "5",
+      #             "workflowKey": "ingestAssetToCollection",
+      #             "fileDataDef": "fileToIngest",
+      #             "requireFileLock": false,
+      #             "contextData": {
+      #                 "targetCollection": "[AssetCollection.200]"
+      #             },
+      #             "_id": "519292bc11b0fa0a37eb9600"
+      #         }
+      #     ]
+      # }
+      #
+      # @note The API Documentation does not mention the fetchIndex and fetchLimit parameters other than in the
+      #   response so it is being assumed that they are available. 2014-04-17
+      def watch_folder_find(args = { })
         http.get('workflow/watchfolder')
       end
       alias :watch_folders :watch_folder_find
       alias :watch_folder_search :watch_folder_find
+      API_METHOD_PARAMETERS[:watch_folder_find] = [
+        { :name => :fetch_index, :default_value => DEFAULT_FETCH_INDEX },
+        { :name => :fetch_limit, :default_value => DEFAULT_FETCH_LIMIT },
+      ]
 
-      # Creates a new watchfolder at the configured path. By default, watchfolders are created but not enabled.
+      # Creates a new watchfolder at the configured path.
+      #
+      # By default, watchfolders are created but not enabled.
       # To enable a watchfolder, either set the "enabled" property when creating, or call the /enable method later.
       #
       # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Create+Watchfolder
@@ -695,16 +841,16 @@ module LevelsBeyond
       # @option args [String] :watch_folder The file system path to the new watchfolder.
       # @option args [String] :workflow_key The ID of the workflow to call when a file is placed into the watchfolder.
       # @option args [String] :file_data_def The file that is detected in the watchfolder must be assigned to a data
-      # def in the workflow defined by workflowKey. This value must match a File data def in the target workflow.
+      #   def in the workflow defined by workflowKey. This value must match a File data def in the target workflow.
       # @option args [String] :subject
       # @option args [Boolean] :enabled Whether or not the watchfolder is enabled. Defaults to "false".
       # @option args [Boolean] :delete_on_success Whether to delete the file in the watchfolder after processing.
-      # Defaults is "false".
+      #   Defaults is "false".
       # @option args [Integer] :max_concurrent The maximum number of files to process at a time. Defaults to 1.
       # @option args [Hash] :context_data Optionally pass other context data into the workflow defined by workflowKey
-      # when a file is to be processed by the workflow. This hash's keys should each be the name of a data def in the
-      # workflow, and the value being a valid value for the data def's type
-      # (i.e., if type is "Integer" value must be a valid number).
+      #   when a file is to be processed by the workflow. This hash's keys should each be the name of a data def in the
+      #   workflow, and the value being a valid value for the data def's type
+      #   (i.e., if type is "Integer" value must be a valid number).
       def watch_folder_create(args = { })
         data = process_method_parameters(__method__, args)
         return http.post_json('workflow/watchfolder', data)
@@ -721,15 +867,16 @@ module LevelsBeyond
         :context_data
       ]
 
-      # When a watchfolder is created, it is disabled. The Enable Watchfolder method enables a watchfolder that is
-      # disabled. Enabling or disabling a watchfolder determines whether or not adding a file to the watchfolder
-      # triggers a workflow. Therefore, if a watchfolder is enabled, and a file is then added to a watchfolder, a
-      # workflow is automatically triggered.
+      # The Enable Watchfolder method enables a watchfolder that is disabled.
+      #
+      # Enabling or disabling a watchfolder determines whether or not adding a file to the watchfolder triggers a
+      # workflow. Therefore, if a watchfolder is enabled, and a file is then added to a watchfolder, a workflow is
+      # automatically triggered.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       #
       # @param [String] watch_folder_id The id of the watch folder
       # @return [Hash]
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_enable(watch_folder_id)
         if watch_folder_id.is_a?(Hash)
           watch_folder_id = process_method_parameters(__method__, watch_folder_id)[:watch_folder_id]
@@ -741,15 +888,16 @@ module LevelsBeyond
         { :name => :watch_folder_id,   :required => true },
       ]
 
-      # The Disable Watchfolder method disables an enabled watchfolder. When a watchfolder is disabled, it  essentially
-      # turns the folder “off” so that it's no longer valid for a workflow. For example, a watchfolder can be disabled
-      # for content reorganization or when activating a new drive and setting up a new watchfolder. A watchfolder
-      # cannot be moved, only deleted or created.
+      # The Disable Watchfolder method disables an enabled watchfolder.
+      #
+      # When a watchfolder is disabled, it  essentially turns the folder “off” so that it's no longer valid for a
+      # workflow. For example, a watchfolder can be disabled for content reorganization or when activating a new drive
+      # and setting up a new watchfolder. A watchfolder cannot be moved, only deleted or created.
+      #
+      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       #
       # @param [String] watch_folder_id The id of the watch folder
       # @return [Hash]
-      #
-      # @see https://levelsbeyond.atlassian.net/wiki/display/DOC/1.3+Enable+Watchfolder
       def watch_folder_disable(watch_folder_id)
         if watch_folder_id.is_a?(Hash)
           watch_folder_id = process_method_parameters(__method__, watch_folder_id)[:watch_folder_id]
