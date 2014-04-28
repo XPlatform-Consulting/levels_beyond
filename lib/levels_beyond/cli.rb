@@ -1,3 +1,5 @@
+require 'rubygems'
+
 require 'logger'
 require 'optparse'
 
@@ -49,17 +51,19 @@ module LevelsBeyond
         @remaining_command_line_arguments
       end
 
-      def parse_common(command_line_arguments = ARGV)
-        parse_common!(command_line_arguments.dup)
+      def parse_common(command_line_arguments = ARGV, _options = (options || { }))
+        parse_common!(command_line_arguments.dup, _options)
       end
 
-      def parse_common!(command_line_arguments = ARGV)
+      def parse_common!(command_line_arguments = ARGV, _options = (options || { }))
         #puts "Parsing #{self.class.name}[#{self.object_id}] options. #{@options}"
+
         @original_command_line_arguments = command_line_arguments.dup
         parse!(command_line_arguments)
+
         @remaining_command_line_arguments = command_line_arguments.dup
 
-        options_file_path = options[:options_file_path]
+        options_file_path = _options[:options_file_path] #||= default_options_file_path
 
         # Make sure that options from the command line override those from the options file
         parse!(original_command_line_arguments.dup) if options_file_path and load(options_file_path)
@@ -78,7 +82,8 @@ module LevelsBeyond
       def check_required_arguments
         _missing_arguments = missing_required_arguments
         unless _missing_arguments.empty?
-          abort "Missing Required Arguments: #{_missing_arguments.map { |v| (v.is_a?(Hash) ? v.values.first : v).to_s.sub('_', '-')}.join(', ')}\n#{self.to_s}"
+          _missing_arguments = _missing_arguments.pop if _missing_arguments.first.is_a?(Array) # This is a work around where _missing_arguments comes back as an array of an array in Ruby 1.8.7
+          abort "Missing Required Arguments: #{ _missing_arguments.map { |v| (v.is_a?(Hash) ? v.values.first : v).to_s.gsub('_', '-')  }.join(', ') }\n\n#{self.to_s}"
         end
       end
 
