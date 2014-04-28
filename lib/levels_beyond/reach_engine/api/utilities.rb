@@ -10,7 +10,7 @@ module LevelsBeyond
 
         DEFAULT_ASSET_INGEST_ANY_WORKFLOW_ID = '_anyAssetIngest'
 
-        attr_accessor :default_asset_ingest_any_workflow_id, :search
+        attr_accessor :default_asset_ingest_any_workflow_id, :search_api
 
         def initialize(args = { })
 
@@ -24,7 +24,8 @@ module LevelsBeyond
           ## UTILITIES SPECIFIC
 
           @default_asset_ingest_any_workflow_id = args[:default_asset_ingest_any_workflow_id] || DEFAULT_ASSET_INGEST_ANY_WORKFLOW_ID
-          @search = LevelsBeyond::ReachEngine::Search.new(args)
+          @search_api = LevelsBeyond::ReachEngine::Search.new(args)
+
         end
 
 
