@@ -3,6 +3,7 @@ require 'pp'
 require 'levels_beyond/cli'
 require 'levels_beyond/reach_engine/api/utilities'
 
+
 module LevelsBeyond
 
   module ReachEngine
@@ -27,9 +28,10 @@ module LevelsBeyond
             op.on('--[no-]log-pretty-print-body', 'Determines if the request and response bodies are pretty printed in the log output.') { |v| options[:log_pretty_print_body] = v }
             op.on('--[no-]pretty-print', 'Determines if the output JSON is pretty printed') { |v| options[:pretty_print] = v }
 
+            add_common_options(op, options)
+
             op.add_required_argument :api_key#, :method_name, :method_arguments
 
-            add_common_options(op, options)
             op.parse_common(command_line_arguments)
 
             remaining_command_line_arguments = op.remaining_command_line_arguments.dup
@@ -61,8 +63,8 @@ module LevelsBeyond
                 methods = api.methods; methods -= Object.methods; methods.sort.each { |method| puts "#{method} #{api.method(method).parameters}" }
                 return
               end
-              response = send(method_name, args[:method_arguments], args)
-              output_response(response,args)
+              response = api_send(method_name, args[:method_arguments], args)
+              output_response(response, args)
             end
           end
 
@@ -89,7 +91,7 @@ module LevelsBeyond
             JSON.parse(method_arguments, :symbolize_names => true)
           end
 
-          def send(method_name, method_arguments, options = {})
+          def api_send(method_name, method_arguments, options = {})
             method_name = method_name.to_sym
             parse_method_arguments = options.fetch(parse_method_arguments, true)
             logger.debug { "Executing Method: #{method_name}" }
@@ -106,7 +108,7 @@ module LevelsBeyond
             end
 
             logger.debug { "Send Arguments: #{send_arguments.inspect}" }
-            api.__send__(*send_arguments)
+            api.send(*send_arguments)
           end
 
         end
